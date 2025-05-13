@@ -1,5 +1,5 @@
 import sys, random
-from PyQt5.QtCore import Qt, QTimer, QPoint, QUrl
+from PyQt5.QtCore import Qt, QTimer, QPoint, QUrl, QDateTime
 from PyQt5.QtGui import QPixmap, QTransform
 from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QDesktopWidget
 from PyQt5.QtMultimedia import QSoundEffect
@@ -15,8 +15,8 @@ class Pet(QWidget):
         self.animation_interval = 100  # milliseconds between frames
         self.sound_volume = 0.2       # range: 0.0 (mute) to 1.0 (max)
         self.walk_speed = 30  # pixels per step (initial speed)
-        self.pickup_counter = 0  # Track the number of pickups in a 2-second window
-        self.volume_set_max = False  # Flag to track if the volume was set to max (1.0)
+        self.pickup_counter = 0
+        self.volume_set_max = False
 
         self.label = QLabel(self)
         self.sprites = {
@@ -45,6 +45,13 @@ class Pet(QWidget):
             sound.setVolume(self.sound_volume)
             self.pickup_sounds.append(sound)
 
+        # Cooldown for pickup sounds
+        self.last_pickup_sound_time = 0
+        self.pickup_sound_cooldown = 500  # ms
+
+        # Keep track of last played sound index
+        self.last_played_sound = None
+
         # "meh" sound
         self.meh_sound = QSoundEffect()
         self.meh_sound.setSource(QUrl.fromLocalFile("assets/meh.wav"))
@@ -63,9 +70,9 @@ class Pet(QWidget):
         # Random movement speed timer
         self.speed_timer = QTimer(self)
         self.speed_timer.timeout.connect(self.set_random_movement_speed)
-        self.speed_timer.start(random.randint(1000, 3000))  # Change speed every 2-6 seconds
+        self.speed_timer.start(random.randint(1000, 3000))
 
-        # State change timer (randomized)
+        # State change timer
         self.state_timer = QTimer(self)
         self.state_timer.timeout.connect(self.toggle_walking)
         self.set_random_state_timer()
@@ -74,12 +81,12 @@ class Pet(QWidget):
         self.gravity_timer = QTimer(self)
         self.gravity_timer.timeout.connect(self.apply_gravity)
 
-        # Timer to reset the pickup counter
+        # Reset pickup counter
         self.pickup_reset_timer = QTimer(self)
         self.pickup_reset_timer.timeout.connect(self.reset_pickup_counter)
-        self.pickup_reset_timer.start(2000)  # Reset counter every 2 seconds
+        self.pickup_reset_timer.start(2000)
 
-        # Timer to randomly play "meh" sound at random times
+        # Random "meh" sound
         self.meh_timer = QTimer(self)
         self.meh_timer.timeout.connect(self.play_meh_sound)
         self.set_random_meh_timer()
@@ -92,7 +99,6 @@ class Pet(QWidget):
         else:
             pix = self.sprites["idle"][self.frame % 4]
 
-        # Flip image if facing left (unless dragging)
         if self.direction == "left" and not self.is_dragging:
             pix = pix.transformed(QTransform().scale(-1, 1))
 
@@ -106,7 +112,6 @@ class Pet(QWidget):
         dx = self.walk_speed if self.direction == "right" else -self.walk_speed
         new_x = self.x() + dx
 
-        # Keep inside screen
         if 0 <= new_x <= self.screen.width() - self.width():
             self.move(new_x, self.y())
         else:
@@ -123,15 +128,11 @@ class Pet(QWidget):
         self.state_timer.start(interval)
 
     def set_random_movement_speed(self):
-        # Randomly change movement speed between 10 and 60 pixels per step
         self.walk_speed = random.randint(10, 60)
         print(f"New walk speed: {self.walk_speed}")
-
-        # Randomize next change time between 2 and 6 seconds
         self.speed_timer.start(random.randint(1000, 3000))
 
     def reset_pickup_counter(self):
-        # Reset the pickup counter every 2 seconds
         self.pickup_counter = 0
 
     def mousePressEvent(self, event):
@@ -141,17 +142,20 @@ class Pet(QWidget):
             self.gravity_timer.stop()
             self.is_dragging = True
 
-            # Play a random pickup sound
-            random.choice(self.pickup_sounds).play()
+            # Play a random pickup sound if not already playing and cooldown passed
+            now = QDateTime.currentMSecsSinceEpoch()
+            if now - self.last_pickup_sound_time > self.pickup_sound_cooldown:
+                # Choose a random sound that is not the last played sound
+                available_sounds = [sound for i, sound in enumerate(self.pickup_sounds) if i != self.last_played_sound]
+                sound_to_play = random.choice(available_sounds)
+                if not sound_to_play.isPlaying():
+                    sound_to_play.play()
+                    self.last_played_sound = self.pickup_sounds.index(sound_to_play)  # Store the index of the last played sound
+                    self.last_pickup_sound_time = now
 
-            # Increment the pickup counter
             self.pickup_counter += 1
-
-            # If the pet has been picked up 4 to 8 times in 2 seconds, set volume to 1.0
             if 4 <= self.pickup_counter <= 8 and not self.volume_set_max:
                 self.set_volume_max()
-
-            # If the volume has been set to 1.0, reset it to 0.2
             elif self.volume_set_max:
                 self.reset_volume()
 
@@ -163,7 +167,6 @@ class Pet(QWidget):
         self.old_pos = None
         self.is_dragging = False
 
-        # Snap to screen boundaries
         x = self.x()
         y = self.y()
         if x < 0:
@@ -194,36 +197,26 @@ class Pet(QWidget):
         self.move(new_x, new_y)
 
     def set_volume_max(self):
-        """Set the sound volume to 1.0 if picked up 4-8 times in 2 seconds."""
         for sound in self.pickup_sounds:
             sound.setVolume(1.0)
         self.volume_set_max = True
         print("Volume set to maximum (1.0) due to multiple pickups.")
 
     def reset_volume(self):
-        """Reset the volume to 0.2 after being set to max (1.0)."""
         for sound in self.pickup_sounds:
             sound.setVolume(0.2)
         self.volume_set_max = False
         print("Volume reset to 0.2.")
 
     def play_meh_sound(self):
-        """Play the 'meh.wav' sound at max volume and reset the random timer."""
-        # Set the volume of the 'meh' sound to maximum
         self.meh_sound.setVolume(1.0)
-
-        # Play the 'meh.wav' sound
         self.meh_sound.play()
         print("Playing 'meh' sound at max volume.")
-        
-        # Restart the random timer with a new random interval
         self.set_random_meh_timer()
 
     def set_random_meh_timer(self):
-        """Set the random interval for playing the 'meh' sound."""
-        # Random time between 1 hour (3600 seconds) and 3 hours (86400 seconds)
         random_interval = random.randint(3600, 10800)
-        self.meh_timer.start(random_interval * 1000)  # Convert seconds to milliseconds
+        self.meh_timer.start(random_interval * 1000)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
