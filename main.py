@@ -3,6 +3,7 @@ from PyQt5.QtCore import Qt, QTimer, QPoint, QUrl, QDateTime
 from PyQt5.QtGui import QPixmap, QTransform
 from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QDesktopWidget
 from PyQt5.QtMultimedia import QSoundEffect
+from control_panel import PetControlPanel
 
 class Pet(QWidget):
     def __init__(self):
@@ -24,7 +25,7 @@ class Pet(QWidget):
         self.walk_speed = 30  # pixels per step (initial speed)
         self.pickup_counter = 0
         self.volume_set_max = False
-        self.poo_spawn_chance = 0.05
+        self.poo_scale_factor = 0.5
 
     def initialize_sprites(self):
         self.label = QLabel(self)
@@ -32,6 +33,8 @@ class Pet(QWidget):
             "walk": [QPixmap(f"assets/walk{i}.png") for i in range(4)],
             "idle": [QPixmap(f"assets/idle{i}.png") for i in range(4)],
             "drag": [QPixmap(f"assets/shiv{i}.png") for i in range(4)],
+            "poop": [QPixmap(f"assets/poop{i}.png") for i in range(4)]
+
         }
         self.direction = random.choice(["left", "right"])
         self.frame = 0
@@ -40,7 +43,7 @@ class Pet(QWidget):
         self.old_pos = None
         self.velocity_y = 0
         self.poo_pixmap = QPixmap("assets/poo.png")
-        self.poo_list = []
+        self.spawned_poo = []
 
     def initialize_sounds(self):
         self.pickup_sounds = []
@@ -62,26 +65,20 @@ class Pet(QWidget):
         self.animation_timer = QTimer(self)
         self.animation_timer.timeout.connect(self.update_sprite)
         self.animation_timer.start(self.animation_interval)
-
         self.move_timer = QTimer(self)
         self.move_timer.timeout.connect(self.move_pet)
         self.move_timer.start(50)
-
         self.speed_timer = QTimer(self)
         self.speed_timer.timeout.connect(self.set_random_movement_speed)
         self.speed_timer.start(random.randint(1000, 3000))
-
         self.state_timer = QTimer(self)
         self.state_timer.timeout.connect(self.toggle_walking)
         self.set_random_state_timer()
-
         self.gravity_timer = QTimer(self)
         self.gravity_timer.timeout.connect(self.apply_gravity)
-
         self.pickup_reset_timer = QTimer(self)
         self.pickup_reset_timer.timeout.connect(self.reset_pickup_counter)
         self.pickup_reset_timer.start(2000)
-
         self.meh_timer = QTimer(self)
         self.meh_timer.timeout.connect(self.play_meh_sound)
         self.set_random_meh_timer()
@@ -114,23 +111,6 @@ class Pet(QWidget):
             self.move(new_x, self.y())
         else:
             self.direction = "left" if self.direction == "right" else "right"
-        if random.random() < self.poo_spawn_chance:
-            self.spawn_poo()
-
-    def spawn_poo(self):
-        if self.poo_pixmap.isNull():
-            return
-        poo_label = QLabel(None)
-        poo_label.setPixmap(self.poo_pixmap)
-        poo_label.resize(self.poo_pixmap.size())
-        x = max(0, min(self.x() + self.width() // 2 - self.poo_pixmap.width() // 2, self.screen.width() - self.poo_pixmap.width()))
-        y = max(0, min(self.y() + self.height() - self.poo_pixmap.height() // 4, self.screen.height() - self.poo_pixmap.height()))
-        poo_label.move(x, y)
-        poo_label.setAttribute(Qt.WA_TranslucentBackground, True)
-        poo_label.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
-        poo_label.show()
-        QTimer.singleShot(10000, poo_label.deleteLater)
-        self.poo_list.append(poo_label)
 
     def toggle_walking(self):
         self.is_walking = not self.is_walking
@@ -238,8 +218,66 @@ class Pet(QWidget):
         random_interval = random.randint(3600, 10800)
         self.meh_timer.start(random_interval * 1000)
 
+    def poop(self):
+        if self.gravity_timer.isActive() or hasattr(self, 'poop_animation_timer') and self.poop_animation_timer.isActive():
+            return  # Don't start poop if falling or already pooping
+        self.is_walking = False
+        self.frame = 0
+        self.current_action = "poop"
+        self.animation_timer.stop()  # stop normal sprite updates
+        self.poop_animation_timer = QTimer(self)
+        self.poop_animation_timer.timeout.connect(self.poop_animation)
+        self.poop_animation_timer.start(self.animation_interval)
+
+
+    def poop_animation(self):
+        if self.frame >= 4:
+            self.poop_animation_timer.stop()
+            self.poop_animation_timer.deleteLater()
+            del self.poop_animation_timer  # avoid keeping the reference
+            self.spawn_poo()
+            self.is_walking = True
+            self.current_action = None
+            self.animation_timer.start(self.animation_interval)  # resume normal animation
+            self.frame = 0  # Reset frame counter
+            return
+        pix = self.sprites["poop"][self.frame % 4]
+        if self.direction == "left":
+            pix = pix.transformed(QTransform().scale(-1, 1))
+        self.label.setPixmap(pix)
+        self.frame += 1
+
+
+    def spawn_poo(self):
+        if self.poo_pixmap.isNull():
+            return
+
+        poo_label = QLabel(None)
+        scaled_poo = self.poo_pixmap.scaled(
+            int(self.poo_pixmap.width() * self.poo_scale_factor),
+            int(self.poo_pixmap.height() * self.poo_scale_factor),
+            Qt.KeepAspectRatio,
+            Qt.SmoothTransformation
+        )
+        poo_label.setPixmap(scaled_poo)
+        poo_label.resize(scaled_poo.size())
+
+        x = max(0, min(self.x() + self.width() // 2 - scaled_poo.width() // 2,
+                    self.screen.width() - scaled_poo.width()))
+        y = self.screen.height() - scaled_poo.height()
+
+        poo_label.move(x, y)
+        poo_label.setAttribute(Qt.WA_TranslucentBackground, True)
+        poo_label.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
+        poo_label.show()
+        self.spawned_poo.append(poo_label)
+        QTimer.singleShot(100000, poo_label.deleteLater)
+
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     pet = Pet()
+    panel = PetControlPanel(pet) 
     pet.show()
+    panel.show()
     sys.exit(app.exec_())
