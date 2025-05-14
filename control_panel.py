@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QProgressBar
-from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtCore import Qt, QTimer 
 
 class PetControlPanel(QWidget):
     def __init__(self, pet):
@@ -57,17 +57,44 @@ class PetControlPanel(QWidget):
         """)
         layout.addWidget(self.poop_bar)
 
+        # XP Bar (Empty by default)
+        self.xp_bar = QProgressBar()
+        self.xp_bar.setRange(0, 100)
+        self.xp_bar.setValue(0)  # Start with 0 XP
+        self.xp_bar.setTextVisible(True)
+        self.xp_bar.setFormat("XP: %p%")
+        self.xp_bar.setStyleSheet("""
+            QProgressBar {
+                border: 2px solid #ccc;
+                border-radius: 10px;
+                text-align: center;
+                font-weight: bold;
+                height: 25px;
+            }
+            QProgressBar::chunk {
+                background-color: #4682B4;
+                border-radius: 10px;
+            }
+        """)
+        layout.addWidget(self.xp_bar)
+
         self.setLayout(layout)
 
-        # Timer to refill bar
-        self.poop_timer = QTimer(self)
-        self.poop_timer.timeout.connect(self.refill_poop_bar)
-        self.poop_timer.start(1000)  # every second
-
-    def refill_poop_bar(self):
+    def refill_poop_bar(self):  # not used yet
         current = self.poop_bar.value()
         if current < 100:
             self.poop_bar.setValue(current + 1)
+
+    def increase_xp(self, amount):  # not used yet
+        """
+        This function increases the XP bar by a specified amount.
+        :param amount: The amount to increase the XP by (1 to 100).
+        """
+        current_xp = self.xp_bar.value()
+        new_xp = current_xp + amount
+        if new_xp > 100:
+            new_xp = 100
+        self.xp_bar.setValue(new_xp)
 
     def try_to_poop(self):
         if self.poop_button.isEnabled():  # ensure it's not already locked

@@ -14,6 +14,7 @@ class Pet(QWidget):
         self.initialize_sounds()
         self.setup_timers()
         self.setup_position()
+        self.eat_animation_timer = None
 
     def setup_window(self):
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
@@ -33,8 +34,8 @@ class Pet(QWidget):
             "walk": [QPixmap(f"assets/walk{i}.png") for i in range(4)],
             "idle": [QPixmap(f"assets/idle{i}.png") for i in range(4)],
             "drag": [QPixmap(f"assets/shiv{i}.png") for i in range(4)],
-            "poop": [QPixmap(f"assets/poop{i}.png") for i in range(4)]
-
+            "poop": [QPixmap(f"assets/poop{i}.png") for i in range(4)],
+            "eat": [QPixmap(f"assets/eat{i}.png") for i in range(4)]  # New eat animation sprites
         }
         self.direction = random.choice(["left", "right"])
         self.frame = 0
@@ -83,12 +84,15 @@ class Pet(QWidget):
         self.meh_timer.timeout.connect(self.play_meh_sound)
         self.set_random_meh_timer()
 
+        self.poop_cleanup_timer = QTimer(self)  # Timer to check for poops to delete
+        self.poop_cleanup_timer.timeout.connect(self.cleanup_poop)
+        self.poop_cleanup_timer.start(1000)  # Check every second
+
     def setup_position(self):
         self.screen = QDesktopWidget().availableGeometry()
         self.label.setPixmap(self.sprites["idle"][0])
         self.resize(self.label.pixmap().size())
         self.move(self.screen.width() // 2, self.screen.height() - self.height())
-
 
     def update_sprite(self):
         if self.is_dragging:
@@ -165,7 +169,6 @@ class Pet(QWidget):
         elif self.volume_set_max:
             self.reset_volume()
 
-
     def mouseMoveEvent(self, event):
         if self.old_pos:
             self.move(event.globalPos() - self.old_pos)
@@ -229,7 +232,6 @@ class Pet(QWidget):
         self.poop_animation_timer.timeout.connect(self.poop_animation)
         self.poop_animation_timer.start(self.animation_interval)
 
-
     def poop_animation(self):
         if self.frame >= 4:
             self.poop_animation_timer.stop()
@@ -246,7 +248,6 @@ class Pet(QWidget):
             pix = pix.transformed(QTransform().scale(-1, 1))
         self.label.setPixmap(pix)
         self.frame += 1
-
 
     def spawn_poo(self):
         if self.poo_pixmap.isNull():
@@ -270,8 +271,72 @@ class Pet(QWidget):
         poo_label.setAttribute(Qt.WA_TranslucentBackground, True)
         poo_label.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
         poo_label.show()
-        self.spawned_poo.append(poo_label)
+
+        spawn_time = QDateTime.currentMSecsSinceEpoch()  # Store spawn time
+        self.spawned_poo.append({"poo_label": poo_label, "spawn_time": spawn_time, "is_deleted": False})  # Added is_deleted flag
         QTimer.singleShot(100000, poo_label.deleteLater)
+
+    def cleanup_poop(self):
+        """Check for poops that have existed for 10 seconds and are still on screen."""
+        for poo in self.spawned_poo:
+            poo_label = poo["poo_label"]
+
+            # Check if the poo label is already marked as deleted
+            if poo.get("is_deleted", False):
+                continue  # Skip this poop if it has already been marked as deleted
+
+            # If 10 seconds have passed, check if pet is on top of the poo and trigger the eat animation
+            if QDateTime.currentMSecsSinceEpoch() - poo["spawn_time"] >= 10000:
+                if self.is_on_top_of_poop(poo_label):
+                    self.handle_eat_animation(poo_label)
+
+    def is_on_top_of_poop(self, poo_label):
+        """Check if the pet's current position overlaps with the poo label's position."""
+        pet_rect = self.geometry()
+        poo_rect = poo_label.geometry()
+
+        return pet_rect.intersects(poo_rect)
+
+    def handle_eat_animation(self, poo_label):
+        """Handle the pet eating the poo animation."""
+        # Only initialize the eat_animation_timer if it hasn't been done already
+        if not self.eat_animation_timer:
+            self.eat_animation_timer = QTimer(self)
+            self.eat_animation_timer.timeout.connect(lambda: self.eat_animation(poo_label))
+
+        self.is_walking = False
+        self.frame = 0
+        self.current_action = "eat"
+        self.animation_timer.stop()  # Stop normal sprite updates
+        self.eat_animation_timer.start(self.animation_interval)
+
+    def eat_animation(self, poo_label):
+        """Animate the pet eating the poo."""
+        if self.frame >= 4:
+            self.eat_animation_timer.stop()
+            self.eat_animation_timer.deleteLater()
+            del self.eat_animation_timer  # Avoid keeping the reference
+            self.eat_animation_timer = None  # Reset it to None after use
+
+            # Safely delete the poo label only if it hasn't been marked as deleted
+            if not poo_label.isHidden() and poo_label.isWindow():
+                poo_label.deleteLater()  # Delete the poop after eating
+
+            # Mark the poo as deleted in our spawned_poo list
+            for poo in self.spawned_poo:
+                if poo["poo_label"] == poo_label:
+                    poo["is_deleted"] = True  # Mark as deleted
+
+            self.is_walking = True
+            self.current_action = None
+            self.animation_timer.start(self.animation_interval)  # Resume normal animation
+            self.frame = 0  # Reset frame counter
+            return
+        pix = self.sprites["eat"][self.frame % 4]
+        if self.direction == "left":
+            pix = pix.transformed(QTransform().scale(-1, 1))
+        self.label.setPixmap(pix)
+        self.frame += 1
 
 
 if __name__ == "__main__":
