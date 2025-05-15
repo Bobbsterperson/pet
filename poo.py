@@ -1,36 +1,116 @@
-import sip
-from PyQt5.QtWidgets import QLabel
-from PyQt5.QtCore import QTimer, QDateTime, Qt
+import sys, random
+from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QDesktopWidget
+from PyQt5.QtCore import Qt, QTimer, QDateTime, QPoint
 from PyQt5.QtGui import QPixmap
+import sip
 
+from dataclasses import dataclass
+
+@dataclass
+class PooType:
+    name: str
+    sprites: list
+    expiration_time: int
+    bladder_value: int
+    xp_value: int
+
+POO_TYPES = {
+    "normal": PooType("normal", [], 60000, 10, 5),
+    "golden": PooType("golden", [], 90000, 25, 20),
+    "spoiled": PooType("spoiled", [], 30000, -5, 2),
+}
 
 class Poo:
-    def __init__(self, parent, pixmap, x, y, scale_factor=0.5):
+    def __init__(self, parent, poo_type: PooType, x, y, scale_factor=0.5):
         self.parent = parent
+        self.poo_type = poo_type
         self.label = QLabel(None)
         self.spawn_time = QDateTime.currentMSecsSinceEpoch()
         self.is_deleted = False
-        scaled_poo = pixmap.scaled(
-            int(pixmap.width() * scale_factor),
-            int(pixmap.height() * scale_factor),
-            Qt.KeepAspectRatio,
-            Qt.SmoothTransformation
-        )
-        self.label.setPixmap(scaled_poo)
-        self.label.resize(scaled_poo.size())
+        self.gravity_enabled = True
+        self.velocity = 0
+        self.is_held = False
+
+        self.sprites = [
+            sprite.scaled(
+                int(sprite.width() * scale_factor),
+                int(sprite.height() * scale_factor),
+                Qt.KeepAspectRatio,
+                Qt.SmoothTransformation
+            )
+            for sprite in self.poo_type.sprites
+        ]
+
+        self.current_stage = 0
+        self.label.setPixmap(self.sprites[self.current_stage])
+        self.label.resize(self.sprites[0].size())
         self.label.move(x, y)
         self.label.setAttribute(Qt.WA_TranslucentBackground, True)
         self.label.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
         self.label.show()
-        QTimer.singleShot(100000, self.deleteLater)
+
+        self.update_stage_timer = QTimer()
+        self.update_stage_timer.timeout.connect(self.update_expiration_stage)
+        self.update_stage_timer.start(self.poo_type.expiration_time // 4)
+
+        self.expiration_timer = QTimer()
+        self.expiration_timer.setSingleShot(True)
+        self.expiration_timer.timeout.connect(self.deleteLater)
+        self.expiration_timer.start(self.poo_type.expiration_time)
+
+    def update_expiration_stage(self):
+        if not self.is_valid():
+            return
+        self.label.setPixmap(self.sprites[self.current_stage])
 
     def is_valid(self):
-        return self.label and not sip.isdeleted(self.label)
+        return self.label is not None and not sip.isdeleted(self.label) and not self.is_deleted
+
+    def apply_gravity(self):
+        if self.is_held or not self.gravity_enabled or self.is_deleted:
+            return
+
+        new_y = self.label.y() + self.velocity
+        self.velocity += 1
+        ground = self.parent.screen.height() - self.label.height()
+
+        if new_y >= ground:
+            new_y = ground
+            self.velocity = 0
+
+        self.label.move(self.label.x(), new_y)
 
     def deleteLater(self):
-        if self.is_valid():
+        if self.label and not sip.isdeleted(self.label):
             self.label.deleteLater()
             self.is_deleted = True
 
+    def consume(self):
+        if not self.is_deleted:
+            self.deleteLater()
+            return self.poo_type.bladder_value, self.poo_type.xp_value
+        return 0, 0
+
     def intersects(self, pet_rect):
         return self.label.geometry().intersects(pet_rect)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.is_held = True
+
+    def mouseMoveEvent(self, event):
+        if self.is_held:
+            self.label.move(event.globalPos() - QPoint(self.label.width() // 2, self.label.height() // 2))
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.is_held = False
+            self.velocity = 1
+
+    def update_poo_gravity(self):
+        for poo in self.poos:
+            if not poo.is_deleted:
+                poo.apply_gravity()
+
+
+

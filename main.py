@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt, QTimer, QDateTime
 from PyQt5.QtGui import QTransform
 from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget
 from control_panel import PetControlPanel
-from poo import Poo
+from poo import Poo, POO_TYPES
 from timers import setup_timers
 from sound import initialize_sounds
 from settings import initialize_settings
@@ -49,7 +49,7 @@ class Pet(QWidget):
     def move_pet(self):
         if self.old_pos is not None or self.gravity_timer.isActive():
             return
-        if self.target_poo and self.target_poo.is_valid():
+        if self.target_poo and not self.target_poo.is_deleted and self.target_poo.label is not None:
             pet_center = self.x() + self.width() // 2
             poo_center = self.target_poo.label.x() + self.target_poo.label.width() // 2
             if abs(pet_center - poo_center) <= 5:
@@ -204,13 +204,11 @@ class Pet(QWidget):
         self.frame += 1
 
     def spawn_poo(self):
-        if self.poo_pixmap.isNull():
-            return
         self.poop_sound.play()
-        x = max(0, min(self.x() + self.width() // 2 - int(self.poo_pixmap.width() * self.poo_scale_factor) // 2,
-                    self.screen.width() - int(self.poo_pixmap.width() * self.poo_scale_factor)))
-        y = self.screen.height() - int(self.poo_pixmap.height() * self.poo_scale_factor)
-        poo = Poo(self, self.poo_pixmap, x, y, self.poo_scale_factor)
+        x = max(0, min(self.x() + self.width() // 2 - int(self.poo_type.sprites[0].width() * self.poo_scale_factor) // 2,
+                    self.screen.width() - int(self.poo_type.sprites[0].width() * self.poo_scale_factor)))
+        y = self.screen.height() - int(self.poo_type.sprites[0].height() * self.poo_scale_factor)
+        poo = Poo(self, self.poo_type, x, y, self.poo_scale_factor)
         self.spawned_poo.append(poo)
 
     def cleanup_poop(self):
@@ -220,7 +218,7 @@ class Pet(QWidget):
         for poo in self.spawned_poo:
             if poo.is_deleted:
                 continue
-            if now - poo.spawn_time >= 10000 and poo.is_valid():
+            if now - poo.spawn_time >= self.time_before_poo_is_edible and not poo.is_deleted:
                 poo_center = poo.label.x() + poo.label.width() // 2
                 distance = abs(pet_center - poo_center)
                 if distance <= 200:
@@ -256,11 +254,11 @@ class Pet(QWidget):
             self.current_action = None
             self.is_walking = True
             self.animation_timer.start(self.animation_interval)
-            if poo and poo in self.spawned_poo and poo.is_valid():
+            if poo and poo in self.spawned_poo:
                 poo.deleteLater()
                 self.spawned_poo.remove(poo)
                 self.control_panel.refill_poop_bar()
-                self.control_panel.increase_xp(self.poo_type_value)
+                self.control_panel.increase_xp(POO_TYPES["normal"].xp_value)
             return
         self.label.setPixmap(eat_frames[self.frame])
         self.frame += 1

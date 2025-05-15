@@ -1,4 +1,3 @@
-
 def initialize_settings(self):
     self.animation_interval = 100
     self.sound_volume = 0.2
@@ -15,3 +14,4 @@ def initialize_settings(self):
     self.poo_type_value = 10
     self.poo_refil_time_value = 0
     self.can_be_picked_up = True
+    self.time_before_poo_is_edible = 2000
