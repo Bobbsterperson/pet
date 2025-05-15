@@ -4,6 +4,8 @@ from PyQt5.QtGui import QPixmap, QTransform
 from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QDesktopWidget
 from PyQt5.QtMultimedia import QSoundEffect
 from control_panel import PetControlPanel
+from poo import Poo
+
 
 class Pet(QWidget):
     def __init__(self):
@@ -27,6 +29,7 @@ class Pet(QWidget):
         self.pickup_counter = 0
         self.volume_set_max = False
         self.poo_scale_factor = 0.5
+        self.bladder_refil_timer = 7500
 
     def initialize_sprites(self):
         self.label = QLabel(self)
@@ -83,7 +86,6 @@ class Pet(QWidget):
         self.meh_timer = QTimer(self)
         self.meh_timer.timeout.connect(self.play_meh_sound)
         self.set_random_meh_timer()
-
         self.poop_cleanup_timer = QTimer(self)  # Timer to check for poops to delete
         self.poop_cleanup_timer.timeout.connect(self.cleanup_poop)
         self.poop_cleanup_timer.start(1000)  # Check every second
@@ -253,42 +255,21 @@ class Pet(QWidget):
         if self.poo_pixmap.isNull():
             return
 
-        poo_label = QLabel(None)
-        scaled_poo = self.poo_pixmap.scaled(
-            int(self.poo_pixmap.width() * self.poo_scale_factor),
-            int(self.poo_pixmap.height() * self.poo_scale_factor),
-            Qt.KeepAspectRatio,
-            Qt.SmoothTransformation
-        )
-        poo_label.setPixmap(scaled_poo)
-        poo_label.resize(scaled_poo.size())
+        x = max(0, min(self.x() + self.width() // 2 - int(self.poo_pixmap.width() * self.poo_scale_factor) // 2,
+                    self.screen.width() - int(self.poo_pixmap.width() * self.poo_scale_factor)))
+        y = self.screen.height() - int(self.poo_pixmap.height() * self.poo_scale_factor)
 
-        x = max(0, min(self.x() + self.width() // 2 - scaled_poo.width() // 2,
-                    self.screen.width() - scaled_poo.width()))
-        y = self.screen.height() - scaled_poo.height()
-
-        poo_label.move(x, y)
-        poo_label.setAttribute(Qt.WA_TranslucentBackground, True)
-        poo_label.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
-        poo_label.show()
-
-        spawn_time = QDateTime.currentMSecsSinceEpoch()  # Store spawn time
-        self.spawned_poo.append({"poo_label": poo_label, "spawn_time": spawn_time, "is_deleted": False})  # Added is_deleted flag
-        QTimer.singleShot(100000, poo_label.deleteLater)
+        poo = Poo(self, self.poo_pixmap, x, y, self.poo_scale_factor, depletion_amount=15)
+        self.spawned_poo.append(poo)
 
     def cleanup_poop(self):
-        """Check for poops that have existed for 10 seconds and are still on screen."""
+        now = QDateTime.currentMSecsSinceEpoch()
         for poo in self.spawned_poo:
-            poo_label = poo["poo_label"]
+            if poo.is_deleted:
+                continue
+            if now - poo.spawn_time >= 10000 and poo.intersects(self.geometry()):
+                self.handle_eat_animation(poo)
 
-            # Check if the poo label is already marked as deleted
-            if poo.get("is_deleted", False):
-                continue  # Skip this poop if it has already been marked as deleted
-
-            # If 10 seconds have passed, check if pet is on top of the poo and trigger the eat animation
-            if QDateTime.currentMSecsSinceEpoch() - poo["spawn_time"] >= 10000:
-                if self.is_on_top_of_poop(poo_label):
-                    self.handle_eat_animation(poo_label)
 
     def is_on_top_of_poop(self, poo_label):
         """Check if the pet's current position overlaps with the poo label's position."""
@@ -297,47 +278,46 @@ class Pet(QWidget):
 
         return pet_rect.intersects(poo_rect)
 
-    def handle_eat_animation(self, poo_label):
-        """Handle the pet eating the poo animation."""
-        # Only initialize the eat_animation_timer if it hasn't been done already
+    def handle_eat_animation(self, poo):
         if not self.eat_animation_timer:
             self.eat_animation_timer = QTimer(self)
-            self.eat_animation_timer.timeout.connect(lambda: self.eat_animation(poo_label))
+            self.eat_animation_timer.timeout.connect(lambda: self.eat_animation(poo))
 
         self.is_walking = False
         self.frame = 0
         self.current_action = "eat"
-        self.animation_timer.stop()  # Stop normal sprite updates
+        self.animation_timer.stop()
         self.eat_animation_timer.start(self.animation_interval)
 
-    def eat_animation(self, poo_label):
-        """Animate the pet eating the poo."""
+    def eat_animation(self, poo):
         if self.frame >= 4:
             self.eat_animation_timer.stop()
             self.eat_animation_timer.deleteLater()
-            del self.eat_animation_timer  # Avoid keeping the reference
-            self.eat_animation_timer = None  # Reset it to None after use
+            self.eat_animation_timer = None
 
-            # Safely delete the poo label only if it hasn't been marked as deleted
-            if not poo_label.isHidden() and poo_label.isWindow():
-                poo_label.deleteLater()  # Delete the poop after eating
+            if poo.is_valid():
+                poo.deleteLater()
 
-            # Mark the poo as deleted in our spawned_poo list
-            for poo in self.spawned_poo:
-                if poo["poo_label"] == poo_label:
-                    poo["is_deleted"] = True  # Mark as deleted
+            # Refill bars
+            refill = int(poo.depletion_amount * 0.5)
+            if hasattr(self, "control_panel"):
+                # Prevent overflow
+                poop_val = min(100, self.control_panel.poop_bar.value() + refill)
+                xp_val = min(100, self.control_panel.xp_bar.value() + refill)
+                self.control_panel.poop_bar.setValue(poop_val)
+                self.control_panel.xp_bar.setValue(xp_val)
 
             self.is_walking = True
             self.current_action = None
-            self.animation_timer.start(self.animation_interval)  # Resume normal animation
-            self.frame = 0  # Reset frame counter
+            self.animation_timer.start(self.animation_interval)
+            self.frame = 0
             return
+
         pix = self.sprites["eat"][self.frame % 4]
         if self.direction == "left":
             pix = pix.transformed(QTransform().scale(-1, 1))
         self.label.setPixmap(pix)
         self.frame += 1
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

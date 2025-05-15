@@ -56,6 +56,9 @@ class PetControlPanel(QWidget):
             }
         """)
         layout.addWidget(self.poop_bar)
+        self.poop_refill_timer = QTimer(self)
+        self.poop_refill_timer.timeout.connect(self.refill_poop_bar)
+        self.poop_refill_timer.start(self.pet.bladder_refil_timer) 
 
         # XP Bar (Empty by default)
         self.xp_bar = QProgressBar()
