@@ -32,6 +32,7 @@ class Pet(QWidget):
         self.approach_speed = 10
         self.poo_type_value = 10
         self.poo_refil_time_value = 0
+        self.can_be_picked_up = True
 
     def initialize_sprites(self):
         self.label = QLabel(self)
@@ -93,12 +94,19 @@ class Pet(QWidget):
         self.pickup_reset_timer = QTimer(self)
         self.pickup_reset_timer.timeout.connect(self.reset_pickup_counter)
         self.pickup_reset_timer.start(2000)
+        self.pickup_cooldown_timer = QTimer(self)
+        self.pickup_cooldown_timer.setInterval(500)
+        self.pickup_cooldown_timer.setSingleShot(True)
+        self.pickup_cooldown_timer.timeout.connect(self.enable_pickup)
         self.meh_timer = QTimer(self)
         self.meh_timer.timeout.connect(self.play_meh_sound)
         self.set_random_meh_timer()
         self.poop_cleanup_timer = QTimer(self)
         self.poop_cleanup_timer.timeout.connect(self.cleanup_poop)
         self.poop_cleanup_timer.start(1000)
+
+    def enable_pickup(self):
+        self.can_be_picked_up = True
 
     def setup_position(self):
         self.screen = QDesktopWidget().availableGeometry()
@@ -166,7 +174,9 @@ class Pet(QWidget):
         self.pickup_counter = 0
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.LeftButton and self.can_be_picked_up:
+            self.can_be_picked_up = False
+            self.pickup_cooldown_timer.start()
             self.start_dragging(event)
             self.play_pickup_sound()
             self.handle_pickup_counter()
