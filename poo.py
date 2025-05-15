@@ -5,13 +5,11 @@ from PyQt5.QtGui import QPixmap
 
 
 class Poo:
-    def __init__(self, parent, pixmap, x, y, scale_factor=0.5, depletion_amount=15):
+    def __init__(self, parent, pixmap, x, y, scale_factor=0.5):
         self.parent = parent
         self.label = QLabel(None)
-        self.depletion_amount = depletion_amount
         self.spawn_time = QDateTime.currentMSecsSinceEpoch()
         self.is_deleted = False
-
         scaled_poo = pixmap.scaled(
             int(pixmap.width() * scale_factor),
             int(pixmap.height() * scale_factor),
@@ -24,7 +22,6 @@ class Poo:
         self.label.setAttribute(Qt.WA_TranslucentBackground, True)
         self.label.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
         self.label.show()
-
         QTimer.singleShot(100000, self.deleteLater)
 
     def is_valid(self):

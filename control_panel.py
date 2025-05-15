@@ -57,13 +57,12 @@ class PetControlPanel(QWidget):
         """)
         layout.addWidget(self.poop_bar)
         self.poop_refill_timer = QTimer(self)
-        self.poop_refill_timer.timeout.connect(self.refill_poop_bar)
+        self.poop_refill_timer.timeout.connect(self.refill_poop_bar_in_time) # not used yet
         self.poop_refill_timer.start(self.pet.bladder_refil_timer) 
 
-        # XP Bar (Empty by default)
         self.xp_bar = QProgressBar()
         self.xp_bar.setRange(0, 100)
-        self.xp_bar.setValue(0)  # Start with 0 XP
+        self.xp_bar.setValue(0)
         self.xp_bar.setTextVisible(True)
         self.xp_bar.setFormat("XP: %p%")
         self.xp_bar.setStyleSheet("""
@@ -83,12 +82,17 @@ class PetControlPanel(QWidget):
 
         self.setLayout(layout)
 
-    def refill_poop_bar(self):  # not used yet
+    def refill_poop_bar_in_time(self):  # not used yet
         current = self.poop_bar.value()
         if current < 100:
-            self.poop_bar.setValue(current + 1)
+            self.poop_bar.setValue(current + self.pet.poo_refil_time_value)
 
-    def increase_xp(self, amount):  # not used yet
+    def refill_poop_bar(self): 
+        current = self.poop_bar.value()
+        if current < 100:
+            self.poop_bar.setValue(current + self.pet.poo_type_value)
+
+    def increase_xp(self, amount):
         """
         This function increases the XP bar by a specified amount.
         :param amount: The amount to increase the XP by (1 to 100).
@@ -100,11 +104,11 @@ class PetControlPanel(QWidget):
         self.xp_bar.setValue(new_xp)
 
     def try_to_poop(self):
-        if self.poop_button.isEnabled():  # ensure it's not already locked
-            if self.poop_bar.value() >= 15:
-                self.poop_bar.setValue(self.poop_bar.value() - 15)
+        if self.poop_button.isEnabled():
+            if self.poop_bar.value() >= 30:
+                self.poop_bar.setValue(self.poop_bar.value() - 30)
                 self.pet.poop()
-                self.lock_button(1000)  # lock button for 1 second
+                self.lock_button(1000)
             else:
                 self.poop_button.setText("Too tired to poop")
                 self.poop_button.setEnabled(False)

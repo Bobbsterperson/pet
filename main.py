@@ -16,13 +16,6 @@ class Pet(QWidget):
         self.initialize_sounds()
         self.setup_timers()
         self.setup_position()
-        self.eat_animation_timer = None
-        self.is_pooping = False         # New
-        self.is_eating = False          # New
-
-    def setup_window(self):
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
-        self.setAttribute(Qt.WA_TranslucentBackground, True)
 
     def initialize_settings(self):
         self.animation_interval = 100
@@ -32,6 +25,13 @@ class Pet(QWidget):
         self.volume_set_max = False
         self.poo_scale_factor = 0.5
         self.bladder_refil_timer = 7500
+        self.eat_animation_timer = None
+        self.is_pooping = False  
+        self.is_eating = False     
+        self.target_poo = None 
+        self.approach_speed = 10
+        self.poo_type_value = 10
+        self.poo_refil_time_value = 0
 
     def initialize_sprites(self):
         self.label = QLabel(self)
@@ -51,6 +51,10 @@ class Pet(QWidget):
         self.poo_pixmap = QPixmap("assets/poo.png")
         self.spawned_poo = []
 
+    def setup_window(self):
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
+        self.setAttribute(Qt.WA_TranslucentBackground, True)
+
     def initialize_sounds(self):
         self.pickup_sounds = []
         for i in range(4):
@@ -58,14 +62,18 @@ class Pet(QWidget):
             sound.setSource(QUrl.fromLocalFile(f"assets/pick{i}.wav"))
             sound.setVolume(self.sound_volume)
             self.pickup_sounds.append(sound)
-
         self.last_pickup_sound_time = 0
         self.pickup_sound_cooldown = 500
         self.last_played_sound = None
-
         self.meh_sound = QSoundEffect()
         self.meh_sound.setSource(QUrl.fromLocalFile("assets/meh.wav"))
         self.meh_sound.setVolume(self.sound_volume)
+        self.poop_sound = QSoundEffect()
+        self.poop_sound.setSource(QUrl.fromLocalFile("assets/poop.wav"))
+        self.poop_sound.setVolume(self.sound_volume)
+        self.eat_sound = QSoundEffect()
+        self.eat_sound.setSource(QUrl.fromLocalFile("assets/eat.wav"))
+        self.eat_sound.setVolume(self.sound_volume)
 
     def setup_timers(self):
         self.animation_timer = QTimer(self)
@@ -113,8 +121,24 @@ class Pet(QWidget):
         self.frame += 1
 
     def move_pet(self):
-        if not self.is_walking or self.old_pos is not None or self.is_pooping or self.is_eating:
+        if self.old_pos is not None or self.gravity_timer.isActive():
             return
+        if self.target_poo and self.target_poo.is_valid():
+            pet_center = self.x() + self.width() // 2
+            poo_center = self.target_poo.label.x() + self.target_poo.label.width() // 2
+            if abs(pet_center - poo_center) <= 5:
+                self.handle_eat_animation(self.target_poo)
+                self.target_poo = None
+            else:
+                self.direction = "right" if pet_center < poo_center else "left"
+                dx = self.approach_speed if self.direction == "right" else -self.approach_speed
+                new_x = self.x() + dx
+                new_x = max(0, min(self.screen.width() - self.width(), new_x))
+                self.move(new_x, self.y())
+            return
+        if not self.is_walking:
+            return
+
         dx = self.walk_speed if self.direction == "right" else -self.walk_speed
         new_x = self.x() + dx
         if 0 <= new_x <= self.screen.width() - self.width():
@@ -153,8 +177,6 @@ class Pet(QWidget):
         self.velocity_y = 0
         self.gravity_timer.stop()
         self.is_dragging = True
-
-        # Cancel poop animation if active
         if self.is_pooping:
             self.is_pooping = False
             if hasattr(self, 'poop_animation_timer'):
@@ -256,23 +278,36 @@ class Pet(QWidget):
     def spawn_poo(self):
         if self.poo_pixmap.isNull():
             return
+        self.poop_sound.play()
         x = max(0, min(self.x() + self.width() // 2 - int(self.poo_pixmap.width() * self.poo_scale_factor) // 2,
                     self.screen.width() - int(self.poo_pixmap.width() * self.poo_scale_factor)))
         y = self.screen.height() - int(self.poo_pixmap.height() * self.poo_scale_factor)
-        poo = Poo(self, self.poo_pixmap, x, y, self.poo_scale_factor, depletion_amount=15)
+        poo = Poo(self, self.poo_pixmap, x, y, self.poo_scale_factor)
         self.spawned_poo.append(poo)
 
     def cleanup_poop(self):
         now = QDateTime.currentMSecsSinceEpoch()
+        pet_center = self.x() + self.width() // 2
+
         for poo in self.spawned_poo:
             if poo.is_deleted:
                 continue
-            if now - poo.spawn_time >= 10000 and poo.intersects(self.geometry()):
-                self.handle_eat_animation(poo)
+            if now - poo.spawn_time >= 10000 and poo.is_valid():
+                poo_center = poo.label.x() + poo.label.width() // 2
+                distance = abs(pet_center - poo_center)
+                if distance <= 200:
+                    if self.target_poo is None:
+                        self.target_poo = poo
+                        self.is_walking = False
+                        self.animation_timer.start(self.animation_interval)
+                    break
+
 
     def handle_eat_animation(self, poo):
+        poo.label.raise_()
         if self.eat_animation_timer or self.is_eating:
             return
+        self.eat_sound.play()
         self.is_eating = True
         self.eat_animation_timer = QTimer(self)
         self.eat_animation_timer.timeout.connect(lambda: self.eat_animation(poo))
@@ -283,29 +318,26 @@ class Pet(QWidget):
         self.eat_animation_timer.start(self.animation_interval)
 
     def eat_animation(self, poo):
-        if self.frame >= 4:
+        eat_frames = self.sprites["eat"]
+        
+        if self.frame >= len(eat_frames):
             self.eat_animation_timer.stop()
-            self.eat_animation_timer.deleteLater()
             self.eat_animation_timer = None
-            self.is_eating = False
-            if poo.is_valid():
-                poo.deleteLater()
-            refill = int(poo.depletion_amount * 0.5)
-            if hasattr(self, "control_panel"):
-                self.control_panel.poop_bar.setValue(min(100, self.control_panel.poop_bar.value() + refill))
-                self.control_panel.xp_bar.setValue(min(100, self.control_panel.xp_bar.value() + refill))
-            self.is_walking = True
-            self.current_action = None
-            self.animation_timer.start(self.animation_interval)
+            self.label.setPixmap(self.sprites["idle"][0])
             self.frame = 0
+            self.is_eating = False
+            self.current_action = None
+            self.is_walking = True
+            self.animation_timer.start(self.animation_interval)
+            if poo and poo in self.spawned_poo and poo.is_valid():
+                poo.deleteLater()
+                self.spawned_poo.remove(poo)
+                self.control_panel.refill_poop_bar()
+                self.control_panel.increase_xp(self.poo_type_value)
             return
-        pix = self.sprites["eat"][self.frame % 4]
-        if self.direction == "left":
-            pix = pix.transformed(QTransform().scale(-1, 1))
-        self.label.setPixmap(pix)
+        self.label.setPixmap(eat_frames[self.frame])
         self.frame += 1
 
-# main unchanged
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     pet = Pet()
