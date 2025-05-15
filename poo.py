@@ -8,14 +8,15 @@ class PooType:
     name: str
     sprites: list
     expiration_time: int
-    bladder_value: int
+    bladder_value_decrese: int
+    bladder_value_return: int
     xp_value: int
     size: float
 
 POO_TYPES = {
-    "normal": PooType("normal", [], 60000, 10, 5, 0.5),
-    "golden": PooType("golden", [], 90000, 25, 20, 0.5),
-    "spoiled": PooType("spoiled", [], 30000, -5, 2, 0.5),
+    "normal": PooType("normal", [], 60000, 40, 10, 5, 0.5),
+    "golden": PooType("golden", [], 90000, 20, 25, 20, 0.5),
+    "spoiled": PooType("spoiled", [], 30000, 20, -5, 2, 0.5),
 }
 
 class Poo:
@@ -87,7 +88,7 @@ class Poo:
     def consume(self):
         if not self.is_deleted:
             self.deleteLater()
-            return self.poo_type.bladder_value, self.poo_type.xp_value
+            return self.poo_type.bladder_value_return, self.poo_type.xp_value
         return 0, 0
 
     def intersects(self, pet_rect):

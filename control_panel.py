@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QProgressBar
 from PyQt5.QtCore import Qt, QTimer 
+from poo import Poo, POO_TYPES
 
 class PetControlPanel(QWidget):
     def __init__(self, pet):
@@ -112,8 +113,8 @@ class PetControlPanel(QWidget):
             QTimer.singleShot(1500, self.reset_button_text)
             return
         if self.poop_button.isEnabled():
-            if self.poop_bar.value() >= 30:
-                self.poop_bar.setValue(self.poop_bar.value() - 30)
+            if self.poop_bar.value() >= POO_TYPES["normal"].bladder_value_decrese:
+                self.poop_bar.setValue(self.poop_bar.value() - POO_TYPES["normal"].bladder_value_decrese)
                 self.pet.poop()
                 self.lock_button(1000)
             else:

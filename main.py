@@ -216,17 +216,16 @@ class Pet(QWidget):
     def cleanup_poop(self):
         now = QDateTime.currentMSecsSinceEpoch()
         pet_center = self.x() + self.width() // 2
-
         for poo in self.spawned_poo:
             if poo.is_deleted:
                 continue
-            if now - poo.spawn_time >= 10000 and poo.is_valid():
+            if now - poo.spawn_time >= self.time_before_poo_is_edible and poo.is_valid():
                 poo_center = poo.label.x() + poo.label.width() // 2
                 distance = abs(pet_center - poo_center)
                 if distance <= 200:
                     current_pooping = self.control_panel.poop_bar.value()
                     max_capacity = 100
-                    refill_amount = poo.poo_type.bladder_value                   
+                    refill_amount = poo.poo_type.bladder_value_return                   
                     if current_pooping + refill_amount <= max_capacity:
                         if self.target_poo is None:
                             self.target_poo = poo
@@ -263,7 +262,7 @@ class Pet(QWidget):
             if poo and poo in self.spawned_poo:
                 poo.deleteLater()
                 self.spawned_poo.remove(poo)
-                self.control_panel.refill_poop_bar(POO_TYPES["normal"].bladder_value)
+                self.control_panel.refill_poop_bar(POO_TYPES["normal"].bladder_value_return)
                 self.control_panel.increase_xp(POO_TYPES["normal"].xp_value)
             return
         self.label.setPixmap(eat_frames[self.frame])
