@@ -104,6 +104,11 @@ class PetControlPanel(QWidget):
         self.xp_bar.setValue(new_xp)
 
     def try_to_poop(self):
+        if self.pet.gravity_timer.isActive() or self.pet.is_dragging:
+            self.poop_button.setText("Can't poop in air")
+            self.poop_button.setEnabled(False)
+            QTimer.singleShot(1500, self.reset_button_text)
+            return
         if self.poop_button.isEnabled():
             if self.poop_bar.value() >= 30:
                 self.poop_bar.setValue(self.poop_bar.value() - 30)
