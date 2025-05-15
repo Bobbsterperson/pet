@@ -1,109 +1,27 @@
 import sys, random
-from PyQt5.QtCore import Qt, QTimer, QPoint, QUrl, QDateTime
-from PyQt5.QtGui import QPixmap, QTransform
-from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QDesktopWidget
-from PyQt5.QtMultimedia import QSoundEffect
+from PyQt5.QtCore import Qt, QTimer, QDateTime
+from PyQt5.QtGui import QTransform
+from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget
 from control_panel import PetControlPanel
 from poo import Poo
-
+from timers import setup_timers
+from sound import initialize_sounds
+from settings import initialize_settings
+from sprites import initialize_sprites
 
 class Pet(QWidget):
     def __init__(self):
         super().__init__()
         self.setup_window()
-        self.initialize_settings()
-        self.initialize_sprites()
-        self.initialize_sounds()
-        self.setup_timers()
+        initialize_settings(self)
+        initialize_sprites(self)
+        initialize_sounds(self)
+        setup_timers(self)
         self.setup_position()
-
-    def initialize_settings(self):
-        self.animation_interval = 100
-        self.sound_volume = 0.2
-        self.walk_speed = 30
-        self.pickup_counter = 0
-        self.volume_set_max = False
-        self.poo_scale_factor = 0.5
-        self.bladder_refil_timer = 7500
-        self.eat_animation_timer = None
-        self.is_pooping = False  
-        self.is_eating = False     
-        self.target_poo = None 
-        self.approach_speed = 10
-        self.poo_type_value = 10
-        self.poo_refil_time_value = 0
-        self.can_be_picked_up = True
-
-    def initialize_sprites(self):
-        self.label = QLabel(self)
-        self.sprites = {
-            "walk": [QPixmap(f"assets/walk{i}.png") for i in range(4)],
-            "idle": [QPixmap(f"assets/idle{i}.png") for i in range(4)],
-            "drag": [QPixmap(f"assets/shiv{i}.png") for i in range(4)],
-            "poop": [QPixmap(f"assets/poop{i}.png") for i in range(4)],
-            "eat": [QPixmap(f"assets/eat{i}.png") for i in range(4)]
-        }
-        self.direction = random.choice(["left", "right"])
-        self.frame = 0
-        self.is_walking = True
-        self.is_dragging = False
-        self.old_pos = None
-        self.velocity_y = 0
-        self.poo_pixmap = QPixmap("assets/poo.png")
-        self.spawned_poo = []
 
     def setup_window(self):
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
-
-    def initialize_sounds(self):
-        self.pickup_sounds = []
-        for i in range(4):
-            sound = QSoundEffect()
-            sound.setSource(QUrl.fromLocalFile(f"assets/pick{i}.wav"))
-            sound.setVolume(self.sound_volume)
-            self.pickup_sounds.append(sound)
-        self.last_pickup_sound_time = 0
-        self.pickup_sound_cooldown = 500
-        self.last_played_sound = None
-        self.meh_sound = QSoundEffect()
-        self.meh_sound.setSource(QUrl.fromLocalFile("assets/meh.wav"))
-        self.meh_sound.setVolume(self.sound_volume)
-        self.poop_sound = QSoundEffect()
-        self.poop_sound.setSource(QUrl.fromLocalFile("assets/poop.wav"))
-        self.poop_sound.setVolume(self.sound_volume)
-        self.eat_sound = QSoundEffect()
-        self.eat_sound.setSource(QUrl.fromLocalFile("assets/eat.wav"))
-        self.eat_sound.setVolume(self.sound_volume)
-
-    def setup_timers(self):
-        self.animation_timer = QTimer(self)
-        self.animation_timer.timeout.connect(self.update_sprite)
-        self.animation_timer.start(self.animation_interval)
-        self.move_timer = QTimer(self)
-        self.move_timer.timeout.connect(self.move_pet)
-        self.move_timer.start(50)
-        self.speed_timer = QTimer(self)
-        self.speed_timer.timeout.connect(self.set_random_movement_speed)
-        self.speed_timer.start(random.randint(1000, 3000))
-        self.state_timer = QTimer(self)
-        self.state_timer.timeout.connect(self.toggle_walking)
-        self.set_random_state_timer()
-        self.gravity_timer = QTimer(self)
-        self.gravity_timer.timeout.connect(self.apply_gravity)
-        self.pickup_reset_timer = QTimer(self)
-        self.pickup_reset_timer.timeout.connect(self.reset_pickup_counter)
-        self.pickup_reset_timer.start(2000)
-        self.pickup_cooldown_timer = QTimer(self)
-        self.pickup_cooldown_timer.setInterval(500)
-        self.pickup_cooldown_timer.setSingleShot(True)
-        self.pickup_cooldown_timer.timeout.connect(self.enable_pickup)
-        self.meh_timer = QTimer(self)
-        self.meh_timer.timeout.connect(self.play_meh_sound)
-        self.set_random_meh_timer()
-        self.poop_cleanup_timer = QTimer(self)
-        self.poop_cleanup_timer.timeout.connect(self.cleanup_poop)
-        self.poop_cleanup_timer.start(1000)
 
     def enable_pickup(self):
         self.can_be_picked_up = True
@@ -118,7 +36,7 @@ class Pet(QWidget):
         if self.is_pooping or self.is_eating:
             return
         if self.is_dragging:
-            pix = self.sprites["drag"][self.frame % 4]
+            pix = self.sprites["shiv"][self.frame % 4]
         elif self.is_walking:
             pix = self.sprites["walk"][self.frame % 4]
         else:
@@ -177,12 +95,12 @@ class Pet(QWidget):
         if event.button() == Qt.LeftButton and self.can_be_picked_up:
             self.can_be_picked_up = False
             self.pickup_cooldown_timer.start()
-            self.start_dragging(event)
+            self.start_shivering(event)
             self.play_pickup_sound()
             self.handle_pickup_counter()
             self.adjust_volume()
 
-    def start_dragging(self, event):
+    def start_shivering(self, event):
         self.old_pos = event.globalPos() - self.pos()
         self.velocity_y = 0
         self.gravity_timer.stop()
@@ -311,7 +229,6 @@ class Pet(QWidget):
                         self.is_walking = False
                         self.animation_timer.start(self.animation_interval)
                     break
-
 
     def handle_eat_animation(self, poo):
         poo.label.raise_()
