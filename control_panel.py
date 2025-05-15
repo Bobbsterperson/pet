@@ -87,10 +87,12 @@ class PetControlPanel(QWidget):
         if current < 100:
             self.poop_bar.setValue(current + self.pet.poo_refil_time_value)
 
-    def refill_poop_bar(self): 
+    def refill_poop_bar(self, amount):
         current = self.poop_bar.value()
-        if current < 100:
-            self.poop_bar.setValue(current + self.pet.poo_type_value)
+        new_value = current + amount
+        if new_value > 100:
+            new_value = 100
+        self.poop_bar.setValue(new_value)
 
     def increase_xp(self, amount):
         """

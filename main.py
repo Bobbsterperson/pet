@@ -205,10 +205,12 @@ class Pet(QWidget):
 
     def spawn_poo(self):
         self.poop_sound.play()
-        x = max(0, min(self.x() + self.width() // 2 - int(self.poo_type.sprites[0].width() * self.poo_scale_factor) // 2,
-                    self.screen.width() - int(self.poo_type.sprites[0].width() * self.poo_scale_factor)))
-        y = self.screen.height() - int(self.poo_type.sprites[0].height() * self.poo_scale_factor)
-        poo = Poo(self, self.poo_type, x, y, self.poo_scale_factor)
+        scale_factor = self.poo_type.size
+        sprite = self.poo_type.sprites[0]
+        x = max(0, min(self.x() + self.width() // 2 - int(sprite.width() * scale_factor) // 2,
+                    self.screen.width() - int(sprite.width() * scale_factor)))
+        y = self.screen.height() - int(sprite.height() * scale_factor)
+        poo = Poo(self, self.poo_type, x, y)
         self.spawned_poo.append(poo)
 
     def cleanup_poop(self):
@@ -218,14 +220,18 @@ class Pet(QWidget):
         for poo in self.spawned_poo:
             if poo.is_deleted:
                 continue
-            if now - poo.spawn_time >= self.time_before_poo_is_edible and not poo.is_deleted:
+            if now - poo.spawn_time >= 10000 and poo.is_valid():
                 poo_center = poo.label.x() + poo.label.width() // 2
                 distance = abs(pet_center - poo_center)
                 if distance <= 200:
-                    if self.target_poo is None:
-                        self.target_poo = poo
-                        self.is_walking = False
-                        self.animation_timer.start(self.animation_interval)
+                    current_pooping = self.control_panel.poop_bar.value()
+                    max_capacity = 100
+                    refill_amount = poo.poo_type.bladder_value                   
+                    if current_pooping + refill_amount <= max_capacity:
+                        if self.target_poo is None:
+                            self.target_poo = poo
+                            self.is_walking = False
+                            self.animation_timer.start(self.animation_interval)
                     break
 
     def handle_eat_animation(self, poo):
@@ -257,7 +263,7 @@ class Pet(QWidget):
             if poo and poo in self.spawned_poo:
                 poo.deleteLater()
                 self.spawned_poo.remove(poo)
-                self.control_panel.refill_poop_bar()
+                self.control_panel.refill_poop_bar(POO_TYPES["normal"].bladder_value)
                 self.control_panel.increase_xp(POO_TYPES["normal"].xp_value)
             return
         self.label.setPixmap(eat_frames[self.frame])

@@ -1,9 +1,6 @@
-import sys, random
-from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QDesktopWidget
+from PyQt5.QtWidgets import QLabel
 from PyQt5.QtCore import Qt, QTimer, QDateTime, QPoint
-from PyQt5.QtGui import QPixmap
 import sip
-
 from dataclasses import dataclass
 
 @dataclass
@@ -13,15 +10,16 @@ class PooType:
     expiration_time: int
     bladder_value: int
     xp_value: int
+    size: float
 
 POO_TYPES = {
-    "normal": PooType("normal", [], 60000, 10, 5),
-    "golden": PooType("golden", [], 90000, 25, 20),
-    "spoiled": PooType("spoiled", [], 30000, -5, 2),
+    "normal": PooType("normal", [], 60000, 10, 5, 0.5),
+    "golden": PooType("golden", [], 90000, 25, 20, 0.5),
+    "spoiled": PooType("spoiled", [], 30000, -5, 2, 0.5),
 }
 
 class Poo:
-    def __init__(self, parent, poo_type: PooType, x, y, scale_factor=0.5):
+    def __init__(self, parent, poo_type: PooType, x, y):
         self.parent = parent
         self.poo_type = poo_type
         self.label = QLabel(None)
@@ -30,7 +28,7 @@ class Poo:
         self.gravity_enabled = True
         self.velocity = 0
         self.is_held = False
-
+        scale_factor = self.poo_type.size
         self.sprites = [
             sprite.scaled(
                 int(sprite.width() * scale_factor),
@@ -57,6 +55,7 @@ class Poo:
         self.expiration_timer.setSingleShot(True)
         self.expiration_timer.timeout.connect(self.deleteLater)
         self.expiration_timer.start(self.poo_type.expiration_time)
+
 
     def update_expiration_stage(self):
         if not self.is_valid():
