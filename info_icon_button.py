@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import pyqtSignal, QSize, Qt
+from PyQt5.QtCore import pyqtSignal, QSize, Qt, QTimer
 
 class InfoIconButton(QPushButton):
     hovered = pyqtSignal(str)
@@ -18,14 +18,24 @@ class InfoIconButton(QPushButton):
         self.setCursor(Qt.PointingHandCursor)
         self.setStyleSheet(self.default_style())
 
+        self.icon_state = False
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.toggle_icon)
+        self.timer.start(250)
+
+    def toggle_icon(self):
+        self.icon_state = not self.icon_state
+        new_icon = self.icon_path_1 if self.icon_state else self.icon_path_0
+        self.setIcon(QIcon(new_icon))
+
+    # Optional: You can keep hover effects or disable them now
     def enterEvent(self, event):
-        self.setIcon(QIcon(self.icon_path_1))
+        # Optionally stop timer or change style on hover
         self.setStyleSheet(self.hover_style())
         self.hovered.emit(self.hover_text)
         super().enterEvent(event)
 
     def leaveEvent(self, event):
-        self.setIcon(QIcon(self.icon_path_0))
         self.setStyleSheet(self.default_style())
         self.unhovered.emit()
         super().leaveEvent(event)

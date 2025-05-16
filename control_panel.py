@@ -1,7 +1,8 @@
-from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QProgressBar, QLabel, QHBoxLayout, QGridLayout
+from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QProgressBar, QLabel, QHBoxLayout, QGridLayout, QShortcut
 from PyQt5.QtCore import Qt, QTimer
 from poo import POO_TYPES
 from info_icon_button import InfoIconButton
+from PyQt5.QtGui import QKeySequence
 
 class PetControlPanel(QWidget):
     def __init__(self, pet):
@@ -17,6 +18,9 @@ class PetControlPanel(QWidget):
         self.poo_refill_upgrade_cost = 20
         self.max_xp = 100
         self.stored_overflow_xp = 0
+        
+        self.space_shortcut = QShortcut(QKeySequence("Space"), self)
+        self.space_shortcut.activated.connect(self.try_to_poop)
 
         layout = QVBoxLayout()
         layout.setSpacing(20)
@@ -166,8 +170,8 @@ class PetControlPanel(QWidget):
                 "callback": self.auto_poop
             },
             {
-                "icon_0": "assets/double_poop_up0.png",
-                "icon_1": "assets/double_poop_up1.png",
+                "icon_0": "assets/double_poop_up1.png",
+                "icon_1": "assets/double_poop_up0.png",
                 "text": "Pet produces double the poop",
                 "callback": self.double_poop_production
             },
@@ -279,7 +283,6 @@ class PetControlPanel(QWidget):
             self.poop_button.setEnabled(False)
             QTimer.singleShot(1500, self.reset_button_text)
             return
-
         if self.poop_button.isEnabled():
             if self.poop_bar.value() >= POO_TYPES["normal"].bladder_value_decrese:
                 self.poop_bar.setValue(self.poop_bar.value() - POO_TYPES["normal"].bladder_value_decrese)
