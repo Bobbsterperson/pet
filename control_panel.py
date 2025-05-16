@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QProgressBar
 from PyQt5.QtCore import Qt, QTimer 
-from poo import Poo, POO_TYPES
+from poo import POO_TYPES
 
 class PetControlPanel(QWidget):
     def __init__(self, pet):
@@ -8,13 +8,9 @@ class PetControlPanel(QWidget):
         self.pet = pet
         self.setWindowTitle("Control Panel")
         self.setFixedSize(400, 800)
-
-        # Layout
         layout = QVBoxLayout()
         layout.setSpacing(20)
         layout.setContentsMargins(20, 20, 20, 20)
-
-        # Poop Button
         self.poop_button = QPushButton("Poop")
         self.poop_button.setCursor(Qt.PointingHandCursor)
         self.poop_button.clicked.connect(self.try_to_poop)
@@ -36,8 +32,6 @@ class PetControlPanel(QWidget):
             }
         """)
         layout.addWidget(self.poop_button)
-
-        # Poop Energy Bar
         self.poop_bar = QProgressBar()
         self.poop_bar.setRange(0, 100)
         self.poop_bar.setValue(100)
@@ -60,7 +54,6 @@ class PetControlPanel(QWidget):
         self.poop_refill_timer = QTimer(self)
         self.poop_refill_timer.timeout.connect(self.refill_poop_bar_in_time) # not used yet
         self.poop_refill_timer.start(self.pet.bladder_refil_timer) 
-
         self.xp_bar = QProgressBar()
         self.xp_bar.setRange(0, 100)
         self.xp_bar.setValue(0)
@@ -80,7 +73,6 @@ class PetControlPanel(QWidget):
             }
         """)
         layout.addWidget(self.xp_bar)
-
         self.setLayout(layout)
 
     def refill_poop_bar_in_time(self):  # not used yet
@@ -96,10 +88,6 @@ class PetControlPanel(QWidget):
         self.poop_bar.setValue(new_value)
 
     def increase_xp(self, amount):
-        """
-        This function increases the XP bar by a specified amount.
-        :param amount: The amount to increase the XP by (1 to 100).
-        """
         current_xp = self.xp_bar.value()
         new_xp = current_xp + amount
         if new_xp > 100:

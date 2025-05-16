@@ -11,7 +11,7 @@ def initialize_settings(self):
     self.can_be_picked_up = True
 
     self.approach_speed = 10
-    self.time_before_poo_is_edible = 000
+    self.time_before_poo_is_edible = 2000
 
-    self.bladder_refil_timer = 7500
+    self.bladder_refil_timer = 10000
     self.poo_refil_time_value = 0

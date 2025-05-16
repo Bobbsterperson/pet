@@ -215,23 +215,37 @@ class Pet(QWidget):
 
     def cleanup_poop(self):
         now = QDateTime.currentMSecsSinceEpoch()
-        pet_center = self.x() + self.width() // 2
+        pet_center = self.get_pet_center()
+        
         for poo in self.spawned_poo:
-            if poo.is_deleted:
+            if self.should_ignore_poo(poo, now):
                 continue
-            if now - poo.spawn_time >= self.time_before_poo_is_edible and poo.is_valid():
-                poo_center = poo.label.x() + poo.label.width() // 2
-                distance = abs(pet_center - poo_center)
-                if distance <= 200:
-                    current_pooping = self.control_panel.poop_bar.value()
-                    max_capacity = 100
-                    refill_amount = poo.poo_type.bladder_value_return                   
-                    if current_pooping + refill_amount <= max_capacity:
-                        if self.target_poo is None:
-                            self.target_poo = poo
-                            self.is_walking = False
-                            self.animation_timer.start(self.animation_interval)
+            
+            if self.is_poo_within_reach(poo, pet_center):
+                if self.can_consume_poo(poo):
+                    self.initiate_poo_consumption(poo)
                     break
+
+    def get_pet_center(self):
+        return self.x() + self.width() // 2
+
+    def should_ignore_poo(self, poo, current_time):
+        return poo.is_deleted or current_time - poo.spawn_time < self.time_before_poo_is_edible or not poo.is_valid()
+
+    def is_poo_within_reach(self, poo, pet_center):
+        poo_center = poo.label.x() + poo.label.width() // 2
+        return abs(pet_center - poo_center) <= 200
+
+    def can_consume_poo(self, poo):
+        current_pooping = self.control_panel.poop_bar.value()
+        refill_amount = poo.poo_type.bladder_value_return
+        return current_pooping + refill_amount <= 100
+
+    def initiate_poo_consumption(self, poo):
+        if self.target_poo is None:
+            self.target_poo = poo
+            self.is_walking = False
+            self.animation_timer.start(self.animation_interval)
 
     def handle_eat_animation(self, poo):
         poo.label.raise_()
