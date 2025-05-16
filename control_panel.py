@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QProgressBar, QLabel, QHBoxLayout
+from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QProgressBar, QLabel, QHBoxLayout, QGridLayout
 from PyQt5.QtCore import Qt, QTimer
 from poo import POO_TYPES
 from info_icon_button import InfoIconButton
@@ -6,6 +6,11 @@ from info_icon_button import InfoIconButton
 class PetControlPanel(QWidget):
     def __init__(self, pet):
         super().__init__()
+        self.setStyleSheet("""
+            QWidget {
+                background-color: #ffe5b4;  /* Light pastel blue-gray */
+            }
+        """)
         self.pet = pet
         self.setWindowTitle("Control Panel")
         self.setFixedSize(400, 800)
@@ -17,11 +22,9 @@ class PetControlPanel(QWidget):
         layout.setSpacing(20)
         layout.setContentsMargins(20, 20, 20, 20)
 
-        # XP + Bladder Bars
         self.poop_bar = self.create_bladder_bar()
         self.xp_bar = self.create_xp_bar()
 
-        # Info Label
         self.info_label = QLabel("")
         self.info_label.setFixedHeight(60)
         self.info_label.setAlignment(Qt.AlignCenter)
@@ -39,15 +42,12 @@ class PetControlPanel(QWidget):
         layout.addWidget(self.xp_bar)
         layout.addWidget(self.info_label)
 
-        # Icon Buttons Layout
         icons_layout = QHBoxLayout()
         self.add_icon_buttons(icons_layout)
         layout.addLayout(icons_layout)
 
-        # Poop Button
         self.poop_button = self.create_poop_button()
         layout.addWidget(self.poop_button)
-
         self.setLayout(layout)
 
         self.poop_refill_timer = QTimer(self)
@@ -120,7 +120,8 @@ class PetControlPanel(QWidget):
         """)
         return button
 
-    def add_icon_buttons(self, layout):
+    def add_icon_buttons(self, parent_layout):
+        grid_layout = QGridLayout()
         buttons_info = [
             {
                 "icon_0": "assets/lvl_butt1.png",
@@ -131,60 +132,98 @@ class PetControlPanel(QWidget):
             {
                 "icon_0": "assets/reg_butt0.png",
                 "icon_1": "assets/reg_butt1.png",
-                "text": "Bladder regen Button: Convert XP into bladder refill units",
+                "text": "Bladder auto reffils",
                 "callback": self.reg_button
             },
             {
-                "icon_0": "assets/reg_butt0.png",
-                "icon_1": "assets/reg_butt1.png",
-                "text": "test increse XP 120",
-                "callback": self.test_xpup
+                "icon_0": "assets/reg_time_butt0.png",
+                "icon_1": "assets/reg_time_butt1.png",
+                "text": "Bladder regen faster",
+                "callback": self.reg_button_time
             },
-            # Add more buttons here
+            {
+                "icon_0": "assets/bladextend_butt0.png",
+                "icon_1": "assets/bladextend_butt1.png",
+                "text": "More bladder storage",
+                "callback": self.estend_bladder_capacity
+            },
+            {
+                "icon_0": "assets/less_bladder_use_to_poop_butt0.png",
+                "icon_1": "assets/less_bladder_use_to_poop_butt1.png",
+                "text": "Less bladder used when pooping",
+                "callback": self.less_bladder_use
+            },
+            {
+                "icon_0": "assets/nutrition_up0.png",
+                "icon_1": "assets/nutrition_up1.png",
+                "text": "Poop is more nutritious",
+                "callback": self.poo_return_more_bladder
+            },
+            {
+                "icon_0": "assets/auto_poop_up0.png",
+                "icon_1": "assets/auto_poop_up1.png",
+                "text": "Pet poops on its own",
+                "callback": self.auto_poop
+            },
+            {
+                "icon_0": "assets/double_poop_up0.png",
+                "icon_1": "assets/double_poop_up1.png",
+                "text": "Pet produces double the poop",
+                "callback": self.double_poop_production
+            },
+            # {
+            #     "icon_0": "assets/reg_butt0.png",
+            #     "icon_1": "assets/reg_butt1.png",
+            #     "text": "test increse XP 120",
+            #     "callback": self.test_xpup
+            # },
+
         ]
-        for info in buttons_info:
+        for index, info in enumerate(buttons_info):
             button = InfoIconButton(info["icon_0"], info["icon_1"], info["text"])
             button.hovered.connect(self.update_info)
             button.unhovered.connect(self.clear_info)
             button.clicked.connect(info["callback"])
-            layout.addWidget(button)
 
-    def test_xpup(self):
-        overflow = self.increase_xp(120)
-        if overflow > 0:
-            self.stored_overflow_xp += overflow
-            print(f"Overflow XP stored: {self.stored_overflow_xp}")
+            row = index // 4
+            col = index % 4
+            grid_layout.addWidget(button, row, col)
+
+        parent_layout.addLayout(grid_layout)
+
+    # def test_xpup(self):
+    #     overflow = self.increase_xp(120)
+    #     if overflow > 0:
+    #         self.stored_overflow_xp += overflow
+    #         print(f"Overflow XP stored: {self.stored_overflow_xp}")
+
+    def reg_button_time(self):
+        pass
+    def estend_bladder_capacity(self):
+        pass
+    def less_bladder_use(self):
+        pass
+    def poo_return_more_bladder(self):
+        pass
+    def auto_poop(self):
+        pass
+    def double_poop_production(self):
+        pass
 
     def lvl_up(self):
         if self.xp_bar.value() < self.max_xp:
             self.info_label.setText("XP not full! Cannot level up.")
             return
-
         old_max = self.max_xp
-        print(f"Stored overflow XP before level up: {self.stored_overflow_xp}")
-        print(f"Old max XP: {old_max}")
-
-        # Increase max XP by 25%
         increased_max = int(old_max * 1.25) + self.stored_overflow_xp
         self.set_max_xp(increased_max)
-
-        # Reset XP bar
         self.xp_bar.setValue(0)
-
-        # Add stored overflow XP to the now-empty XP bar with new max
         overflow_to_add = self.stored_overflow_xp
         self.stored_overflow_xp = 0
-
-        # Add overflow XP back to XP bar, store any further overflow
         leftover = self.increase_xp(overflow_to_add)
         if leftover > 0:
             self.stored_overflow_xp += leftover
-
         self.info_label.setText(f"Level Up! Max XP increased to {self.max_xp}.")
-        print(f"Stored overflow XP after level up: {self.stored_overflow_xp}")
-        print(f"Old max XP: {old_max}, New max XP: {self.max_xp}")
-
-
 
     def can_level_up(self):
         return self.xp_bar.value() >= self.max_xp
@@ -193,9 +232,8 @@ class PetControlPanel(QWidget):
         current_xp = self.xp_bar.value()
         if current_xp >= self.poo_refill_upgrade_cost:
             self.xp_bar.setValue(current_xp - self.poo_refill_upgrade_cost)
-            self.pet.poo_refil_time_value += 1  # Upgrade the refill rate
+            self.pet.poo_refil_time_value += 1
             print(f"Refill rate increased to {self.pet.poo_refil_time_value}")
-            # Increase the cost exponentially or linearly (e.g., ×10 for next)
             self.poo_refill_upgrade_cost *= 50
             self.info_label.setText(f"Upgrade success! Next cost: {self.poo_refill_upgrade_cost} XP")
         else:
@@ -220,24 +258,19 @@ class PetControlPanel(QWidget):
     def increase_xp(self, amount):
         current_xp = self.xp_bar.value()
         total_xp = current_xp + amount
-
         if total_xp > self.max_xp:
             overflow = total_xp - self.max_xp
-            self.xp_bar.setValue(self.max_xp)  # fill XP bar
+            self.xp_bar.setValue(self.max_xp)
             return overflow
         else:
             self.xp_bar.setValue(total_xp)
             return 0
 
-
-
     def set_max_xp(self, new_max):
         self.max_xp = new_max
         self.xp_bar.setRange(0, new_max)
-        # Optionally reset current XP if it’s above the new max
         if self.xp_bar.value() > new_max:
             self.xp_bar.setValue(new_max)
-        # Update format again if needed
         self.xp_bar.setFormat(f"XP: %v/{new_max}")
 
     def try_to_poop(self):

@@ -20,7 +20,7 @@ def initialize_sprites(self):
     # POO_TYPES["golden"].sprites = golden_sprites
     # POO_TYPES["spoiled"].sprites = spoiled_sprites
 
-    self.poo_type = POO_TYPES["normal"]  # you can change this later dynamically if needed
+    self.poo_type = POO_TYPES["normal"]  #change this later dynamically if needed
 
     self.direction = random.choice(["left", "right"])
     self.frame = 0

@@ -124,6 +124,7 @@ class Pet(QWidget):
                 self.last_pickup_sound_time = now
 
     def handle_pickup_counter(self):
+        self.control_panel.refill_poop_bar(1)
         self.pickup_counter += 1
 
     def adjust_volume(self):

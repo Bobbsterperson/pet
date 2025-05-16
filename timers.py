@@ -23,7 +23,7 @@ def setup_timers(self):
 
     self.pickup_reset_timer = QTimer(self)
     self.pickup_reset_timer.timeout.connect(self.reset_pickup_counter)
-    self.pickup_reset_timer.start(2000)
+    self.pickup_reset_timer.start(3000)
 
     self.pickup_cooldown_timer = QTimer(self)
     self.pickup_cooldown_timer.setInterval(500)

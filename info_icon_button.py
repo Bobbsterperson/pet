@@ -2,10 +2,9 @@ from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import pyqtSignal, QSize, Qt
 
-
 class InfoIconButton(QPushButton):
-    hovered = pyqtSignal(str)   # Signal to update info bar
-    unhovered = pyqtSignal()    # Signal to clear info bar
+    hovered = pyqtSignal(str)
+    unhovered = pyqtSignal()
 
     def __init__(self, icon_path_0, icon_path_1, hover_text, parent=None):
         super().__init__(parent)
