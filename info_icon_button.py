@@ -13,9 +13,9 @@ class InfoIconButton(QPushButton):
         self.icon_path_1 = icon_path_1
         self.hover_text = hover_text
 
-        self.setFixedSize(64, 64)
+        self.setFixedSize(84, 84)
         self.setIcon(QIcon(self.icon_path_0))
-        self.setIconSize(QSize(48, 48))
+        self.setIconSize(QSize(68, 68))
         self.setCursor(Qt.PointingHandCursor)
         self.setStyleSheet(self.default_style())
 

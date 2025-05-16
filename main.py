@@ -261,7 +261,6 @@ class Pet(QWidget):
 
     def eat_animation(self, poo):
         eat_frames = self.sprites["eat"]
-        
         if self.frame >= len(eat_frames):
             self.eat_animation_timer.stop()
             self.eat_animation_timer = None

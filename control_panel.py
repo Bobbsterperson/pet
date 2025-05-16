@@ -121,14 +121,25 @@ class PetControlPanel(QWidget):
     def add_icon_buttons(self, layout):
         buttons_info = [
             {
+                "icon_0": "assets/lvl_butt1.png",
+                "icon_1": "assets/lvl_butt0.png",
+                "text": "level up Button: extend XP bar",
+                "callback": self.lvl_up
+            },
+            {
                 "icon_0": "assets/reg_butt0.png",
                 "icon_1": "assets/reg_butt1.png",
                 "text": "Bladder regen Button: Convert XP into bladder refill units",
-                "callback": self.reg_button  # ✅ valid use of self
+                "callback": self.reg_button
+            },
+            {
+                "icon_0": "assets/reg_butt0.png",
+                "icon_1": "assets/reg_butt1.png",
+                "text": "test increse XP 120",
+                "callback": self.lvl_up
             },
             # Add more buttons here
         ]
-
         for info in buttons_info:
             button = InfoIconButton(info["icon_0"], info["icon_1"], info["text"])
             button.hovered.connect(self.update_info)
@@ -136,6 +147,9 @@ class PetControlPanel(QWidget):
             button.clicked.connect(info["callback"])  # ✅ no quotes!
             layout.addWidget(button)
         
+    def lvl_up(self):
+        self.increase_xp(120)
+
     def reg_button(self):
         current_xp = self.xp_bar.value()
         if current_xp >= self.poo_refill_upgrade_cost:
