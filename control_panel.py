@@ -10,6 +10,8 @@ class PetControlPanel(QWidget):
         self.setWindowTitle("Control Panel")
         self.setFixedSize(400, 800)
         self.poo_refill_upgrade_cost = 20
+        self.max_xp = 100
+        self.stored_overflow_xp = 0
 
         layout = QVBoxLayout()
         layout.setSpacing(20)
@@ -48,7 +50,6 @@ class PetControlPanel(QWidget):
 
         self.setLayout(layout)
 
-        # Timer for refill
         self.poop_refill_timer = QTimer(self)
         self.poop_refill_timer.timeout.connect(self.refill_poop_bar_in_time)
         self.poop_refill_timer.start(self.pet.bladder_refil_timer)
@@ -76,10 +77,10 @@ class PetControlPanel(QWidget):
 
     def create_xp_bar(self):
         bar = QProgressBar()
-        bar.setRange(0, 100)
+        bar.setRange(0, self.max_xp)
         bar.setValue(0)
         bar.setTextVisible(True)
-        bar.setFormat("XP: %p%")
+        bar.setFormat(f"XP: %v/%m")
         bar.setStyleSheet("""
             QProgressBar {
                 border: 2px solid #ccc;
@@ -94,6 +95,7 @@ class PetControlPanel(QWidget):
             }
         """)
         return bar
+
 
     def create_poop_button(self):
         button = QPushButton("Poop")
@@ -136,7 +138,7 @@ class PetControlPanel(QWidget):
                 "icon_0": "assets/reg_butt0.png",
                 "icon_1": "assets/reg_butt1.png",
                 "text": "test increse XP 120",
-                "callback": self.lvl_up
+                "callback": self.test_xpup
             },
             # Add more buttons here
         ]
@@ -144,11 +146,48 @@ class PetControlPanel(QWidget):
             button = InfoIconButton(info["icon_0"], info["icon_1"], info["text"])
             button.hovered.connect(self.update_info)
             button.unhovered.connect(self.clear_info)
-            button.clicked.connect(info["callback"])  # ✅ no quotes!
+            button.clicked.connect(info["callback"])
             layout.addWidget(button)
-        
+
+    def test_xpup(self):
+        overflow = self.increase_xp(120)
+        if overflow > 0:
+            self.stored_overflow_xp += overflow
+            print(f"Overflow XP stored: {self.stored_overflow_xp}")
+
     def lvl_up(self):
-        self.increase_xp(120)
+        if self.xp_bar.value() < self.max_xp:
+            self.info_label.setText("XP not full! Cannot level up.")
+            return
+
+        old_max = self.max_xp
+        print(f"Stored overflow XP before level up: {self.stored_overflow_xp}")
+        print(f"Old max XP: {old_max}")
+
+        # Increase max XP by 25%
+        increased_max = int(old_max * 1.25) + self.stored_overflow_xp
+        self.set_max_xp(increased_max)
+
+        # Reset XP bar
+        self.xp_bar.setValue(0)
+
+        # Add stored overflow XP to the now-empty XP bar with new max
+        overflow_to_add = self.stored_overflow_xp
+        self.stored_overflow_xp = 0
+
+        # Add overflow XP back to XP bar, store any further overflow
+        leftover = self.increase_xp(overflow_to_add)
+        if leftover > 0:
+            self.stored_overflow_xp += leftover
+
+        self.info_label.setText(f"Level Up! Max XP increased to {self.max_xp}.")
+        print(f"Stored overflow XP after level up: {self.stored_overflow_xp}")
+        print(f"Old max XP: {old_max}, New max XP: {self.max_xp}")
+
+
+
+    def can_level_up(self):
+        return self.xp_bar.value() >= self.max_xp
 
     def reg_button(self):
         current_xp = self.xp_bar.value()
@@ -180,8 +219,26 @@ class PetControlPanel(QWidget):
 
     def increase_xp(self, amount):
         current_xp = self.xp_bar.value()
-        new_xp = min(current_xp + amount, 100)
-        self.xp_bar.setValue(new_xp)
+        total_xp = current_xp + amount
+
+        if total_xp > self.max_xp:
+            overflow = total_xp - self.max_xp
+            self.xp_bar.setValue(self.max_xp)  # fill XP bar
+            return overflow
+        else:
+            self.xp_bar.setValue(total_xp)
+            return 0
+
+
+
+    def set_max_xp(self, new_max):
+        self.max_xp = new_max
+        self.xp_bar.setRange(0, new_max)
+        # Optionally reset current XP if it’s above the new max
+        if self.xp_bar.value() > new_max:
+            self.xp_bar.setValue(new_max)
+        # Update format again if needed
+        self.xp_bar.setFormat(f"XP: %v/{new_max}")
 
     def try_to_poop(self):
         if self.pet.gravity_timer.isActive() or self.pet.is_dragging:
