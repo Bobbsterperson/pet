@@ -215,12 +215,10 @@ class Pet(QWidget):
 
     def cleanup_poop(self):
         now = QDateTime.currentMSecsSinceEpoch()
-        pet_center = self.get_pet_center()
-        
+        pet_center = self.get_pet_center()       
         for poo in self.spawned_poo:
             if self.should_ignore_poo(poo, now):
-                continue
-            
+                continue           
             if self.is_poo_within_reach(poo, pet_center):
                 if self.can_consume_poo(poo):
                     self.initiate_poo_consumption(poo)

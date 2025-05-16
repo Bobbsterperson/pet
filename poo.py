@@ -14,7 +14,7 @@ class PooType:
     size: float
 
 POO_TYPES = {
-    "normal": PooType("normal", [], 60000, 30, 10, 5, 0.5),
+    "normal": PooType("normal", [], 60000, 30, 10, 100, 0.5),
     "golden": PooType("golden", [], 90000, 20, 25, 20, 0.5),
     "spoiled": PooType("spoiled", [], 30000, 20, -5, 2, 0.5),
 }
