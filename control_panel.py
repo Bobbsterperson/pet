@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QProgressBar, QLabel, QHBoxLayout, QGridLayout, QShortcut
 from PyQt5.QtCore import Qt, QTimer
+
 from poo import POO_TYPES
 from info_icon_button import InfoIconButton
 from PyQt5.QtGui import QKeySequence
@@ -8,34 +9,40 @@ from dataclasses import replace
 class PetControlPanel(QWidget):
     def __init__(self, pet):
         super().__init__()
-        self.setStyleSheet("""
-            QWidget {
-                background-color: #ffe5b4;  /* Light pastel blue-gray */
-            }
-        """)
         self.pet = pet
         self.setWindowTitle("Control Panel")
-        self.setFixedSize(400, 800)
+        self.setFixedSize(600, 1000)
         
+        self.setStyleSheet("""
+            QWidget {
+                background-color: qlineargradient(
+                    x1:0, y1:0, x2:1, y2:1,
+                    stop:0 #4b0082,
+                    stop:1 #00ffff
+                );
+                color: white;
+                font-family: 'Comic Sans MS', 'Arial', sans-serif;
+            }
+        """)
+
         self.space_shortcut = QShortcut(QKeySequence("Space"), self)
         self.space_shortcut.activated.connect(self.try_to_poop)
 
         layout = QVBoxLayout()
         layout.setSpacing(20)
-        layout.setContentsMargins(20, 20, 20, 20)
 
         self.poop_bar = self.create_bladder_bar()
         self.xp_bar = self.create_xp_bar()
 
         self.info_label = QLabel("")
-        self.info_label.setFixedHeight(60)
+        self.info_label.setFixedHeight(self.pet.text_bar_size)
         self.info_label.setAlignment(Qt.AlignCenter)
         self.info_label.setStyleSheet("""
             QLabel {
-                font-size: 14px;
-                color: #444;
-                background-color: #f5f5f5;
-                border: 1px solid #ccc;
+                font-size: 24px;
+                color: #ffffff;
+                background-color: rgba(0, 0, 0, 0.5);
+                border: 2px dashed #ff66cc;
                 border-radius: 8px;
                 padding: 4px;
             }
@@ -64,14 +71,17 @@ class PetControlPanel(QWidget):
         bar.setFormat("Bladder: %v/%m")
         bar.setStyleSheet("""
             QProgressBar {
-                border: 2px solid #ccc;
+                border: 2px solid #ffffff;
                 border-radius: 10px;
                 text-align: center;
                 font-weight: bold;
-                height: 25px;
+                font-size: 18px;
+                color: #ff00ff;
+                height: 45px;
+                background-color: rgba(0, 0, 0, 0.3);
             }
             QProgressBar::chunk {
-                background-color: #76c893;
+                background-color: #39ff14;
                 border-radius: 10px;
             }
         """)
@@ -85,17 +95,19 @@ class PetControlPanel(QWidget):
         bar.setRange(0, self.pet.max_xp)
         bar.setValue(0)
         bar.setTextVisible(True)
-        bar.setFormat(f"XP: %v/%m")
+        bar.setFormat("XP: %v/%m")
         bar.setStyleSheet("""
             QProgressBar {
-                border: 2px solid #ccc;
+                border: 2px solid #ffffff;
                 border-radius: 10px;
                 text-align: center;
                 font-weight: bold;
-                height: 25px;
+                font-size: 18px;
+                height: 45px;
+                background-color: rgba(0, 0, 0, 0.3);
             }
             QProgressBar::chunk {
-                background-color: #4682B4;
+                background-color: #00bfff;
                 border-radius: 10px;
             }
         """)
@@ -107,19 +119,20 @@ class PetControlPanel(QWidget):
         button.clicked.connect(self.try_to_poop)
         button.setStyleSheet("""
             QPushButton {
-                background-color: #FFB347;
-                color: #333;
-                font-size: 18px;
+                background-color: #ff1493;
+                color: white;
+                font-size: 20px;
                 font-weight: bold;
+                border: 3px double white;
+                border-radius: 15px;
                 padding: 10px;
-                border-radius: 12px;
-                border: 2px solid #e69500;
+
             }
             QPushButton:hover {
-                background-color: #FFD580;
+                background-color: #ff69b4;
             }
             QPushButton:pressed {
-                background-color: #e69500;
+                background-color: #c71585;
             }
         """)
         return button

@@ -28,3 +28,5 @@ def initialize_settings(self):
 
     self.stored_overflow_xp = 0
     self.bladder_bar_cap = 100
+
+    self.text_bar_size = 80
