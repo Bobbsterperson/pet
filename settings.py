@@ -14,4 +14,17 @@ def initialize_settings(self):
     self.time_before_poo_is_edible = 2000
 
     self.bladder_refil_timer = 10000
-    self.poo_refil_time_value = 0
+    self.poo_units_refil_time_value = 0
+
+    self.auto_poop_interval = 35000
+
+    self.max_xp = 100
+    self.auto_poo_refill_upgrade_cost = 50
+    self.bladder_regen_speed_cost = 20
+    self.bladder_extend_cost = 30
+    self.less_bladder_use_cost = 50
+    self.poo_return_more_bladder_cost = 50
+    self.auto_poop_cost = 70
+
+    self.stored_overflow_xp = 0
+    self.bladder_bar_cap = 100
