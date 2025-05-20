@@ -17,11 +17,13 @@ class PetControlPanel(QWidget):
         self.setWindowTitle("Control Panel")
         self.setFixedSize(400, 800)
 
-        self.auto_poo_refill_upgrade_cost = 20
-        self.bladder_regen_speed_cost = 50
+        self.auto_poo_refill_upgrade_cost = 50
+        self.bladder_regen_speed_cost = 20
+        self.bladder_extend_cost = 30
 
         self.max_xp = 100
         self.stored_overflow_xp = 0
+        self.bladder_bar_cap = 100
         
         self.space_shortcut = QShortcut(QKeySequence("Space"), self)
         self.space_shortcut.activated.connect(self.try_to_poop)
@@ -64,10 +66,10 @@ class PetControlPanel(QWidget):
 
     def create_bladder_bar(self):
         bar = QProgressBar()
-        bar.setRange(0, 100)
+        bar.setRange(0, self.bladder_bar_cap)
         bar.setValue(100)
         bar.setTextVisible(True)
-        bar.setFormat("Bladder: %p%")
+        bar.setFormat("Bladder: %v/%m")
         bar.setStyleSheet("""
             QProgressBar {
                 border: 2px solid #ccc;
@@ -81,6 +83,9 @@ class PetControlPanel(QWidget):
                 border-radius: 10px;
             }
         """)
+        def update_format(value):
+            bar.setFormat(f"Bladder: {value}/{bar.maximum()}")
+        bar.valueChanged.connect(update_format)
         return bar
 
     def create_xp_bar(self):
@@ -153,7 +158,7 @@ class PetControlPanel(QWidget):
                 "icon_0": "assets/bladextend_butt0.png",
                 "icon_1": "assets/bladextend_butt1.png",
                 "text": "More bladder storage",
-                "callback": self.estend_bladder_capacity
+                "callback": self.extend_bladder_capacity
             },
             {
                 "icon_0": "assets/less_bladder_use_to_poop_butt0.png",
@@ -191,29 +196,26 @@ class PetControlPanel(QWidget):
             button.hovered.connect(self.update_info)
             button.unhovered.connect(self.clear_info)
             button.clicked.connect(info["callback"])
-
             row = index // 4
             col = index % 4
             grid_layout.addWidget(button, row, col)
-
         parent_layout.addLayout(grid_layout)
 
-    def reg_button_time(self):
-        pass
-        self.settings.bladder_refil_timer - 100
-        
+    def extend_bladder_capacity(self):
         current_xp = self.xp_bar.value()
-        if current_xp >= self.bladder_regen_speed_cost:
-            self.xp_bar.setValue(current_xp - self.bladder_regen_speed_cost)
-            self.pet.poo_refil_time_value += 1
-            print(f"speed rate of auto bladder refill increased to {self.pet.poo_refil_time_value}")
-            self.bladder_regen_speed_cost *= 30
-            self.info_label.setText(f"Upgrade success! Next cost: {self.bladder_regen_speed_cost} XP")
-        else:
-            self.info_label.setText(f"Need {self.bladder_regen_speed_cost} XP! You have {current_xp}.")
+        if current_xp >= self.bladder_extend_cost:
+            self.xp_bar.setValue(current_xp - self.bladder_extend_cost)
+            
+            old_cap = self.bladder_bar_cap
+            new_cap = int(old_cap * 1.1)  # Increase by 10%
+            self.set_max_bladder(new_cap)
 
-    def estend_bladder_capacity(self):
-        pass
+            self.bladder_extend_cost *= 30  # Increase upgrade cost
+            self.info_label.setText(f"Bladder extended to {new_cap}. Next upgrade: {self.bladder_extend_cost} XP")
+        else:
+            self.info_label.setText(f"Need {self.bladder_extend_cost} XP! You have {current_xp}.")
+
+
     def less_bladder_use(self):
         pass
     def poo_return_more_bladder(self):
@@ -237,9 +239,6 @@ class PetControlPanel(QWidget):
         self.stored_overflow_xp = 0
         self.info_label.setText(f"Level Up! Max XP increased to {self.max_xp}.")
 
-    def can_level_up(self):
-        return self.xp_bar.value() >= self.max_xp
-
     def reg_button(self):
         current_xp = self.xp_bar.value()
         if current_xp >= self.auto_poo_refill_upgrade_cost:
@@ -250,6 +249,17 @@ class PetControlPanel(QWidget):
             self.info_label.setText(f"Upgrade success! Next cost: {self.auto_poo_refill_upgrade_cost} XP")
         else:
             self.info_label.setText(f"Need {self.auto_poo_refill_upgrade_cost} XP! You have {current_xp}.")
+
+    def reg_button_time(self):
+        current_xp = self.xp_bar.value()
+        if current_xp >= self.bladder_regen_speed_cost:
+            self.xp_bar.setValue(current_xp - self.bladder_regen_speed_cost)
+            self.pet.bladder_refil_timer - 100
+            print(f"speed rate of auto bladder refill increased to {self.pet.bladder_refil_timer}")
+            self.bladder_regen_speed_cost *= 30
+            self.info_label.setText(f"Upgrade success! Next cost: {self.bladder_regen_speed_cost} XP")
+        else:
+            self.info_label.setText(f"Need {self.bladder_regen_speed_cost} XP! You have {current_xp}.")
 
     def update_info(self, text):
         self.info_label.setText(text)
@@ -286,6 +296,13 @@ class PetControlPanel(QWidget):
         if self.xp_bar.value() > new_max:
             self.xp_bar.setValue(new_max)
         self.xp_bar.setFormat(f"XP: %v/{new_max}")
+
+    def set_max_bladder(self, new_max_b):
+        self.bladder_bar_cap = new_max_b
+        self.poop_bar.setRange(0, new_max_b)
+        if self.poop_bar.value() > new_max_b:
+            self.poop_bar.setValue(new_max_b)
+        self.poop_bar.setFormat(f"Bladder: %v/{new_max_b}")
 
     def try_to_poop(self):
         if self.pet.gravity_timer.isActive() or self.pet.is_dragging:
