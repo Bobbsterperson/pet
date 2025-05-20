@@ -4,6 +4,7 @@ from poo import POO_TYPES
 from info_icon_button import InfoIconButton
 from PyQt5.QtGui import QKeySequence
 
+
 class PetControlPanel(QWidget):
     def __init__(self, pet):
         super().__init__()
@@ -15,7 +16,10 @@ class PetControlPanel(QWidget):
         self.pet = pet
         self.setWindowTitle("Control Panel")
         self.setFixedSize(400, 800)
-        self.poo_refill_upgrade_cost = 20
+
+        self.auto_poo_refill_upgrade_cost = 20
+        self.bladder_regen_speed_cost = 50
+
         self.max_xp = 100
         self.stored_overflow_xp = 0
         
@@ -175,6 +179,12 @@ class PetControlPanel(QWidget):
                 "text": "Pet produces double the poop",
                 "callback": self.double_poop_production
             },
+            {
+                "icon_0": "assets/toggle_window0.png",
+                "icon_1": "assets/toggle_window1.png",
+                "text": "move pet from screen to island",
+                "callback": self.toggle_window
+            },
             # {
             #     "icon_0": "assets/reg_butt0.png",
             #     "icon_1": "assets/reg_butt1.png",
@@ -203,6 +213,18 @@ class PetControlPanel(QWidget):
 
     def reg_button_time(self):
         pass
+        self.settings.bladder_refil_timer - 100
+        
+        current_xp = self.xp_bar.value()
+        if current_xp >= self.bladder_regen_speed_cost:
+            self.xp_bar.setValue(current_xp - self.bladder_regen_speed_cost)
+            self.pet.poo_refil_time_value += 1
+            print(f"speed rate of auto bladder refill increased to {self.pet.poo_refil_time_value}")
+            self.bladder_regen_speed_cost *= 30
+            self.info_label.setText(f"Upgrade success! Next cost: {self.bladder_regen_speed_cost} XP")
+        else:
+            self.info_label.setText(f"Need {self.bladder_regen_speed_cost} XP! You have {current_xp}.")
+
     def estend_bladder_capacity(self):
         pass
     def less_bladder_use(self):
@@ -212,6 +234,8 @@ class PetControlPanel(QWidget):
     def auto_poop(self):
         pass
     def double_poop_production(self):
+        pass
+    def toggle_window(self):
         pass
 
     def lvl_up(self):
@@ -234,14 +258,14 @@ class PetControlPanel(QWidget):
 
     def reg_button(self):
         current_xp = self.xp_bar.value()
-        if current_xp >= self.poo_refill_upgrade_cost:
-            self.xp_bar.setValue(current_xp - self.poo_refill_upgrade_cost)
+        if current_xp >= self.auto_poo_refill_upgrade_cost:
+            self.xp_bar.setValue(current_xp - self.auto_poo_refill_upgrade_cost)
             self.pet.poo_refil_time_value += 1
-            print(f"Refill rate increased to {self.pet.poo_refil_time_value}")
-            self.poo_refill_upgrade_cost *= 50
-            self.info_label.setText(f"Upgrade success! Next cost: {self.poo_refill_upgrade_cost} XP")
+            print(f"Units for auto refill increased to {self.pet.poo_refil_time_value}")
+            self.auto_poo_refill_upgrade_cost *= 50
+            self.info_label.setText(f"Upgrade success! Next cost: {self.auto_poo_refill_upgrade_cost} XP")
         else:
-            self.info_label.setText(f"Need {self.poo_refill_upgrade_cost} XP! You have {current_xp}.")
+            self.info_label.setText(f"Need {self.auto_poo_refill_upgrade_cost} XP! You have {current_xp}.")
 
     def update_info(self, text):
         self.info_label.setText(text)
