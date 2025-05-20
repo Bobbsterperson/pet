@@ -26,7 +26,7 @@ def setup_timers(self):
     self.pickup_reset_timer.start(3000)
 
     self.pickup_cooldown_timer = QTimer(self)
-    self.pickup_cooldown_timer.setInterval(500)
+    self.pickup_cooldown_timer.setInterval(600)
     self.pickup_cooldown_timer.setSingleShot(True)
     self.pickup_cooldown_timer.timeout.connect(self.enable_pickup)
 

@@ -185,13 +185,6 @@ class PetControlPanel(QWidget):
                 "text": "move pet from screen to island",
                 "callback": self.toggle_window
             },
-            # {
-            #     "icon_0": "assets/reg_butt0.png",
-            #     "icon_1": "assets/reg_butt1.png",
-            #     "text": "test increse XP 120",
-            #     "callback": self.test_xpup
-            # },
-
         ]
         for index, info in enumerate(buttons_info):
             button = InfoIconButton(info["icon_0"], info["icon_1"], info["text"])
@@ -204,12 +197,6 @@ class PetControlPanel(QWidget):
             grid_layout.addWidget(button, row, col)
 
         parent_layout.addLayout(grid_layout)
-
-    # def test_xpup(self):
-    #     overflow = self.increase_xp(120)
-    #     if overflow > 0:
-    #         self.stored_overflow_xp += overflow
-    #         print(f"Overflow XP stored: {self.stored_overflow_xp}")
 
     def reg_button_time(self):
         pass
@@ -243,14 +230,11 @@ class PetControlPanel(QWidget):
             self.info_label.setText("XP not full! Cannot level up.")
             return
         old_max = self.max_xp
-        increased_max = int(old_max * 1.25) + self.stored_overflow_xp
-        self.set_max_xp(increased_max)
+        new_max = int(old_max * 1.45)
+        self.set_max_xp(new_max)
         self.xp_bar.setValue(0)
-        overflow_to_add = self.stored_overflow_xp
+        self.increase_xp(self.stored_overflow_xp)
         self.stored_overflow_xp = 0
-        leftover = self.increase_xp(overflow_to_add)
-        if leftover > 0:
-            self.stored_overflow_xp += leftover
         self.info_label.setText(f"Level Up! Max XP increased to {self.max_xp}.")
 
     def can_level_up(self):
@@ -286,10 +270,12 @@ class PetControlPanel(QWidget):
     def increase_xp(self, amount):
         current_xp = self.xp_bar.value()
         total_xp = current_xp + amount
+
         if total_xp > self.max_xp:
             overflow = total_xp - self.max_xp
             self.xp_bar.setValue(self.max_xp)
-            return overflow
+            self.stored_overflow_xp += overflow
+            return 0
         else:
             self.xp_bar.setValue(total_xp)
             return 0
