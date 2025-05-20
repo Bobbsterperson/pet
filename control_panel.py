@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt, QTimer
 from poo import POO_TYPES
 from info_icon_button import InfoIconButton
 from PyQt5.QtGui import QKeySequence
-
+from dataclasses import replace
 
 class PetControlPanel(QWidget):
     def __init__(self, pet):
@@ -20,6 +20,8 @@ class PetControlPanel(QWidget):
         self.auto_poo_refill_upgrade_cost = 50
         self.bladder_regen_speed_cost = 20
         self.bladder_extend_cost = 30
+        self.less_bladder_use_cost = 50
+        self.poo_return_more_bladder_cost = 50
 
         self.max_xp = 100
         self.stored_overflow_xp = 0
@@ -108,7 +110,6 @@ class PetControlPanel(QWidget):
             }
         """)
         return bar
-
 
     def create_poop_button(self):
         button = QPushButton("Poop")
@@ -201,25 +202,6 @@ class PetControlPanel(QWidget):
             grid_layout.addWidget(button, row, col)
         parent_layout.addLayout(grid_layout)
 
-    def extend_bladder_capacity(self):
-        current_xp = self.xp_bar.value()
-        if current_xp >= self.bladder_extend_cost:
-            self.xp_bar.setValue(current_xp - self.bladder_extend_cost)
-            
-            old_cap = self.bladder_bar_cap
-            new_cap = int(old_cap * 1.1)  # Increase by 10%
-            self.set_max_bladder(new_cap)
-
-            self.bladder_extend_cost *= 30  # Increase upgrade cost
-            self.info_label.setText(f"Bladder extended to {new_cap}. Next upgrade: {self.bladder_extend_cost} XP")
-        else:
-            self.info_label.setText(f"Need {self.bladder_extend_cost} XP! You have {current_xp}.")
-
-
-    def less_bladder_use(self):
-        pass
-    def poo_return_more_bladder(self):
-        pass
     def auto_poop(self):
         pass
     def double_poop_production(self):
@@ -260,6 +242,46 @@ class PetControlPanel(QWidget):
             self.info_label.setText(f"Upgrade success! Next cost: {self.bladder_regen_speed_cost} XP")
         else:
             self.info_label.setText(f"Need {self.bladder_regen_speed_cost} XP! You have {current_xp}.")
+
+    def extend_bladder_capacity(self):
+        current_xp = self.xp_bar.value()
+        if current_xp >= self.bladder_extend_cost:
+            self.xp_bar.setValue(current_xp - self.bladder_extend_cost)
+            
+            old_cap = self.bladder_bar_cap
+            new_cap = int(old_cap * 1.1)
+            self.set_max_bladder(new_cap)
+
+            self.bladder_extend_cost *= 30
+            self.info_label.setText(f"Bladder extended to {new_cap}. Next upgrade: {self.bladder_extend_cost} XP")
+        else:
+            self.info_label.setText(f"Need {self.bladder_extend_cost} XP! You have {current_xp}.")
+
+    def less_bladder_use(self):
+        current_xp = self.xp_bar.value()
+        if current_xp >= self.less_bladder_use_cost:
+            self.xp_bar.setValue(current_xp - self.less_bladder_use_cost)
+            normal_poo = POO_TYPES["normal"]
+            new_decrese_value = max(normal_poo.bladder_value_decrese - 1, 0)
+            POO_TYPES["normal"] = replace(normal_poo, bladder_value_decrese=new_decrese_value)
+            print(f"Poo uses less bladder {new_decrese_value}")
+            self.less_bladder_use_cost *= 50
+            self.info_label.setText(f"Upgrade success! Next cost: {self.less_bladder_use_cost} XP")
+        else:
+            self.info_label.setText(f"Need {self.less_bladder_use_cost} XP! You have {current_xp}.")
+   
+    def poo_return_more_bladder(self):
+        current_xp = self.xp_bar.value()
+        if current_xp >= self.poo_return_more_bladder_cost:
+            self.xp_bar.setValue(current_xp - self.poo_return_more_bladder_cost)
+            normal_poo = POO_TYPES["normal"]
+            new_return_value = normal_poo.bladder_value_return + 1
+            POO_TYPES["normal"] = replace(normal_poo, bladder_value_return=new_return_value)
+            print(f"poo returns more bladder {new_return_value}")
+            self.poo_return_more_bladder_cost *= 50
+            self.info_label.setText(f"Upgrade success! Next cost: {self.poo_return_more_bladder_cost} XP")
+        else:
+            self.info_label.setText(f"Need {self.poo_return_more_bladder_cost} XP! You have {current_xp}.")
 
     def update_info(self, text):
         self.info_label.setText(text)
