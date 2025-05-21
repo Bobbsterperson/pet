@@ -10,6 +10,7 @@ class PetControlPanel(QWidget):
         super().__init__()
         self.pet = pet
         self.upgrades = PetUpgradeManager(self)
+
         self.setWindowTitle("Control Panel")
         self.setFixedSize(1000, 600)
         self.setStyleSheet("""
@@ -43,10 +44,13 @@ class PetControlPanel(QWidget):
                 background-color: rgba(0, 255, 255, 0.5);
             }
         """)
-        self.setAttribute(Qt.WA_TranslucentBackground, True) # toggle transparent background for the control panel
+
+        self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
+
         self.space_shortcut = QShortcut(QKeySequence("Space"), self)
         self.space_shortcut.activated.connect(self.try_to_poop)
+
         layout = QVBoxLayout()
         layout.setSpacing(20)
 
@@ -55,14 +59,15 @@ class PetControlPanel(QWidget):
         self.add_menu_buttons(menu_layout)
         layout.addLayout(menu_layout)
 
-        # Bladder bar and XP bar
+        # Group bars and info into a container for easy toggling
+        self.bars_container = QVBoxLayout()
+
         self.poop_bar = self.create_bladder_bar()
-        layout.addWidget(self.poop_bar)
+        self.bars_container.addWidget(self.poop_bar)
 
         self.xp_bar = self.create_xp_bar()
-        layout.addWidget(self.xp_bar)
+        self.bars_container.addWidget(self.xp_bar)
 
-        # Info label
         self.info_label = QLabel("")
         self.info_label.setFixedHeight(self.pet.text_bar_size)
         self.info_label.setAlignment(Qt.AlignCenter)
@@ -76,28 +81,29 @@ class PetControlPanel(QWidget):
                 padding: 4px;
             }
         """)
-        layout.addWidget(self.info_label)
+        self.bars_container.addWidget(self.info_label)
 
+        layout.addLayout(self.bars_container)
 
-        # Upgrade buttons at the top
-        icons_layout = QHBoxLayout()
-        self.add_upgrade_buttons(icons_layout)
-        layout.addLayout(icons_layout)
-
-
+        # Upgrade buttons layout (saved for toggling)
+        self.icons_layout = QHBoxLayout()
+        self.add_upgrade_buttons(self.icons_layout)
+        layout.addLayout(self.icons_layout)
 
         # Poop button
         self.poop_button = self.create_poop_button()
         layout.addWidget(self.poop_button)
 
-        # Set the layout
+        # Final layout setup
         self.setLayout(layout)
 
-
+        # Timer for bladder refill
         self.poop_refill_timer = QTimer(self)
         self.poop_refill_timer.timeout.connect(self.refill_poop_bar_in_time)
         self.poop_refill_timer.start(self.pet.bladder_refil_timer)
+
         self._drag_pos = None
+
 
     def create_bladder_bar(self):
         bar = QProgressBar()
@@ -246,6 +252,18 @@ class PetControlPanel(QWidget):
         grid_layout = QGridLayout()
         buttons_info = [
             {
+                "icon_0": "assets/hide_bars0.png",
+                "icon_1": "assets/hide_bars1.png",
+                "text_func": lambda: "Bars",
+                "callback": self.hide_bars
+            },
+            {
+                "icon_0": "assets/hide_upgrades0.png",
+                "icon_1": "assets/hide_upgrades1.png",
+                "text_func": lambda: "Upgrades",
+                "callback": self.hide_upgrades
+            },
+            {
                 "icon_0": "assets/size_down0.png",
                 "icon_1": "assets/size_down1.png",
                 "text_func": lambda: "Panel size down",
@@ -291,6 +309,36 @@ class PetControlPanel(QWidget):
             grid_layout.addWidget(button, row, col)
         outer_layout.addLayout(grid_layout)
         parent_layout.addLayout(outer_layout)
+
+    def hide_bars(self):
+        visible = self.poop_bar.isVisible()
+        self.poop_bar.setVisible(not visible)
+        self.xp_bar.setVisible(not visible)
+        self.info_label.setVisible(not visible)
+
+    def hide_upgrades(self):
+        if not hasattr(self, "icons_layout"):
+            return
+        count = self.icons_layout.count()
+        if count == 0:
+            return
+        first_item = self.icons_layout.itemAt(0)
+        if first_item is None:
+            return
+        inner_layout = first_item.layout()
+        if inner_layout is None:
+            return
+        inner_count = inner_layout.count()
+        if inner_count == 0:
+            return
+        first_widget = inner_layout.itemAt(0).widget()
+        if first_widget is None:
+            return
+        is_visible = first_widget.isVisible()
+        for i in range(inner_count):
+            widget = inner_layout.itemAt(i).widget()
+            if widget:
+                widget.setVisible(not is_visible)
 
     def double_poop_production(self):
         pass
