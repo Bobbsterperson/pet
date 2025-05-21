@@ -10,9 +10,10 @@ class PetControlPanel(QWidget):
         super().__init__()
         self.pet = pet
         self.upgrades = PetUpgradeManager(self)
+        
 
         self.setWindowTitle("Control Panel")
-        self.setFixedSize(1000, 600)
+        self.setFixedSize(1000, 550)
         self.setStyleSheet("""
             QWidget {
                 background-color: transparent;
@@ -54,10 +55,13 @@ class PetControlPanel(QWidget):
         layout = QVBoxLayout()
         layout.setSpacing(20)
 
-        # Menu buttons
-        menu_layout = QHBoxLayout()
+        # Create menu buttons container widget and layout
+        self.menu_buttons_widget = QWidget()
+        menu_layout = QHBoxLayout(self.menu_buttons_widget)
+        menu_layout.setContentsMargins(0, 0, 0, 0)
+        menu_layout.setSpacing(10)
         self.add_menu_buttons(menu_layout)
-        layout.addLayout(menu_layout)
+        layout.addWidget(self.menu_buttons_widget)
 
         # Group bars and info into a container for easy toggling
         self.bars_container = QVBoxLayout()
@@ -85,10 +89,21 @@ class PetControlPanel(QWidget):
 
         layout.addLayout(self.bars_container)
 
-        # Upgrade buttons layout (saved for toggling)
-        self.icons_layout = QHBoxLayout()
-        self.add_upgrade_buttons(self.icons_layout)
-        layout.addLayout(self.icons_layout)
+        # Create upgrades container widget and layout
+        self.upgrades_widget = QWidget()
+        upgrades_layout = QHBoxLayout(self.upgrades_widget)
+        upgrades_layout.setContentsMargins(0, 0, 0, 0)
+        upgrades_layout.setSpacing(10)
+        self.add_upgrade_buttons(upgrades_layout)
+        layout.addWidget(self.upgrades_widget)
+
+        self.skills_widget = QWidget()
+        skills_layout = QHBoxLayout(self.skills_widget)
+        skills_layout.setContentsMargins(0, 0, 0, 0)
+        skills_layout.setSpacing(10)
+        self.add_skill_buttons(skills_layout)
+        layout.addWidget(self.skills_widget)
+        self.skills_widget.setVisible(False) # to hide it on start
 
         # Poop button
         self.poop_button = self.create_poop_button()
@@ -103,6 +118,7 @@ class PetControlPanel(QWidget):
         self.poop_refill_timer.start(self.pet.bladder_refil_timer)
 
         self._drag_pos = None
+
 
 
     def create_bladder_bar(self):
@@ -180,6 +196,8 @@ class PetControlPanel(QWidget):
         return button
 
     def add_upgrade_buttons(self, parent_layout):
+        outer_layout = QHBoxLayout()
+        outer_layout.addStretch()
         grid_layout = QGridLayout()
         buttons_info = [
             {
@@ -224,12 +242,6 @@ class PetControlPanel(QWidget):
                 "text_func": lambda: f"Pet poops on its own \nCurrent cost: {self.pet.auto_poop_cost}",
                 "callback": self.upgrades.auto_poop,
             },
-            {
-                "icon_0": "assets/double_poop_up1.png",
-                "icon_1": "assets/double_poop_up0.png",
-                "text_func": lambda: "Pet produces double the poop",
-                "callback": self.double_poop_production
-            },
         ]
         for index, info in enumerate(buttons_info):
             initial_text = info.get("text", "")
@@ -241,9 +253,12 @@ class PetControlPanel(QWidget):
                 button.hovered.connect(lambda _, t=initial_text: self.update_info(t))
             button.unhovered.connect(self.clear_info)
             button.clicked.connect(info["callback"])
-            row = index // 8
-            col = index % 8
+            row = index // 10
+            col = index % 10
             grid_layout.addWidget(button, row, col)
+        outer_layout.addLayout(grid_layout)
+        parent_layout.addLayout(outer_layout)
+
         parent_layout.addLayout(grid_layout)
 
     def add_menu_buttons(self, parent_layout):
@@ -252,14 +267,26 @@ class PetControlPanel(QWidget):
         grid_layout = QGridLayout()
         buttons_info = [
             {
-                "icon_0": "assets/hide_bars0.png",
-                "icon_1": "assets/hide_bars1.png",
+                "icon_0": "assets/achivements0.png",
+                "icon_1": "assets/achivements1.png",
+                "text_func": lambda: "Achivements",
+                "callback": self.hide_achivements
+            },
+            {
+                "icon_0": "assets/skill0.png",
+                "icon_1": "assets/skill1.png",
+                "text_func": lambda: "Skills",
+                "callback": self.hide_skills
+            },
+            {
+                "icon_0": "assets/bars0.png",
+                "icon_1": "assets/bars1.png",
                 "text_func": lambda: "Bars",
                 "callback": self.hide_bars
             },
             {
-                "icon_0": "assets/hide_upgrades0.png",
-                "icon_1": "assets/hide_upgrades1.png",
+                "icon_0": "assets/upgrades0.png",
+                "icon_1": "assets/upgrades1.png",
                 "text_func": lambda: "Upgrades",
                 "callback": self.hide_upgrades
             },
@@ -304,44 +331,64 @@ class PetControlPanel(QWidget):
                 button.hovered.connect(lambda _, t=initial_text: self.update_info(t))
             button.unhovered.connect(self.clear_info)
             button.clicked.connect(info["callback"])
-            row = index // 8
-            col = index % 8
+            row = index // 10
+            col = index % 10
             grid_layout.addWidget(button, row, col)
         outer_layout.addLayout(grid_layout)
         parent_layout.addLayout(outer_layout)
 
+    def add_skill_buttons(self, parent_layout):
+        outer_layout = QHBoxLayout()
+        outer_layout.addStretch()
+        grid_layout = QGridLayout()
+        buttons_info = [
+            {
+                "icon_0": "assets/double_poop_up1.png",
+                "icon_1": "assets/double_poop_up0.png",
+                "text_func": lambda: "Pet produces double the poop",
+                "callback": self.double_poop_production
+            },
+        ]
+        for index, info in enumerate(buttons_info):
+            initial_text = info.get("text", "")
+            button = InfoIconButton(info["icon_0"], info["icon_1"], initial_text)
+            text_func = info.get("text_func")
+            if text_func:
+                button.hovered.connect(lambda _, f=text_func: self.update_info(f()))
+            else:
+                button.hovered.connect(lambda _, t=initial_text: self.update_info(t))
+            button.unhovered.connect(self.clear_info)
+            button.clicked.connect(info["callback"])
+            row = index // 10
+            col = index % 10
+            grid_layout.addWidget(button, row, col)
+        outer_layout.addLayout(grid_layout)
+        parent_layout.addLayout(outer_layout)
+
+    def double_poop_production(self):
+        pass
+
+    def hide_achivements(self):
+        pass
+    
+    def hide_skills(self):
+        if hasattr(self, "skills_widget"):
+            is_visible = self.skills_widget.isVisible()
+            self.skills_widget.setVisible(not is_visible)
+            self.update_panel_size()
+    
     def hide_bars(self):
         visible = self.poop_bar.isVisible()
         self.poop_bar.setVisible(not visible)
         self.xp_bar.setVisible(not visible)
         self.info_label.setVisible(not visible)
+        self.update_panel_size()
 
     def hide_upgrades(self):
-        if not hasattr(self, "icons_layout"):
-            return
-        count = self.icons_layout.count()
-        if count == 0:
-            return
-        first_item = self.icons_layout.itemAt(0)
-        if first_item is None:
-            return
-        inner_layout = first_item.layout()
-        if inner_layout is None:
-            return
-        inner_count = inner_layout.count()
-        if inner_count == 0:
-            return
-        first_widget = inner_layout.itemAt(0).widget()
-        if first_widget is None:
-            return
-        is_visible = first_widget.isVisible()
-        for i in range(inner_count):
-            widget = inner_layout.itemAt(i).widget()
-            if widget:
-                widget.setVisible(not is_visible)
-
-    def double_poop_production(self):
-        pass
+        if hasattr(self, "upgrades_widget"):
+            is_visible = self.upgrades_widget.isVisible()
+            self.upgrades_widget.setVisible(not is_visible)
+            self.update_panel_size()
 
     def panel_size_up(self):
         current_size = self.size()
@@ -449,3 +496,59 @@ class PetControlPanel(QWidget):
     def mouseReleaseEvent(self, event):
         self._drag_pos = None
         event.accept()
+
+    def update_panel_size(self):
+        base_width = 1000
+        total_height = 0
+        layout = self.layout()
+        spacing = layout.spacing()
+        margins = layout.contentsMargins()
+        total_height += margins.top() + margins.bottom()
+
+        def add_widget_height(widget, is_first=False):
+            nonlocal total_height
+            if widget and widget.isVisible():
+                if not is_first:
+                    total_height += spacing
+                total_height += widget.sizeHint().height()
+
+        widgets_in_order = [
+            self.menu_buttons_widget if hasattr(self, 'menu_buttons_widget') else None,
+            self.poop_bar,
+            self.xp_bar,
+            self.info_label,
+            self.upgrades_widget if hasattr(self, 'upgrades_widget') else None,
+            self.skills_widget if hasattr(self, 'skills_widget') else None,
+            self.poop_button
+        ]
+
+        first_visible_found = False
+        for w in widgets_in_order:
+            if w and w.isVisible():
+                add_widget_height(w, is_first=not first_visible_found)
+                first_visible_found = True
+
+        # Enforce minimum/maximum height limits if necessary
+        min_height = 200
+        max_height = 1000
+        final_height = max(min_height, min(total_height, max_height))
+
+        self.setFixedSize(base_width, final_height)
+
+
+    # def populate_info_buttons(self, buttons_info, grid_layout, update_info_func, clear_info_func):
+    #     for index, info in enumerate(buttons_info):
+    #         initial_text = info.get("text", "")
+    #         button = InfoIconButton(info["icon_0"], info["icon_1"], initial_text)
+    #         text_func = info.get("text_func")
+    #         if text_func:
+    #             button.hovered.connect(lambda _, f=text_func: update_info_func(f()))
+    #         else:
+    #             button.hovered.connect(lambda _, t=initial_text: update_info_func(t))
+    #         button.unhovered.connect(clear_info_func)
+    #         button.clicked.connect(info["callback"])
+    #         row = index // 10
+    #         col = index % 10
+    #         grid_layout.addWidget(button, row, col)
+
+
