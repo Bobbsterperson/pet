@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt, QTimer
 from poo import POO_TYPES
 from info_icon_button import InfoIconButton
 from PyQt5.QtGui import QKeySequence
-from dataclasses import replace
+from pet_upgrade_manager import lvl_up, reg_button, reg_button_time, extend_bladder_capacity, less_bladder_use, poo_return_more_bladder, auto_poop, try_to_poop
 
 class PetControlPanel(QWidget):
     def __init__(self, pet):
@@ -44,11 +44,10 @@ class PetControlPanel(QWidget):
                 background-color: rgba(0, 255, 255, 0.5);
             }
         """)
-
         self.setAttribute(Qt.WA_TranslucentBackground, True) # toggle transparent background for the control panel
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Tool)
         self.space_shortcut = QShortcut(QKeySequence("Space"), self)
-        self.space_shortcut.activated.connect(self.try_to_poop)
+        self.space_shortcut.activated.connect(lambda: try_to_poop(self))
         layout = QVBoxLayout()
         layout.setSpacing(20)
         self.poop_bar = self.create_bladder_bar()
@@ -69,20 +68,16 @@ class PetControlPanel(QWidget):
         layout.addWidget(self.poop_bar)
         layout.addWidget(self.xp_bar)
         layout.addWidget(self.info_label)
-
         icons_layout = QHBoxLayout()
         self.add_icon_buttons(icons_layout)
         layout.addLayout(icons_layout)
-
         self.poop_button = self.create_poop_button()
         layout.addWidget(self.poop_button)
         self.setLayout(layout)
-
         self.poop_refill_timer = QTimer(self)
         self.poop_refill_timer.timeout.connect(self.refill_poop_bar_in_time)
         self.poop_refill_timer.start(self.pet.bladder_refil_timer)
-
-        self._drag_pos = None  # Store drag start position
+        self._drag_pos = None
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
@@ -151,7 +146,7 @@ class PetControlPanel(QWidget):
     def create_poop_button(self):
         button = QPushButton("Poop")
         button.setCursor(Qt.PointingHandCursor)
-        button.clicked.connect(self.try_to_poop)
+        button.clicked.connect(lambda: try_to_poop(self))
         button.setStyleSheet("""
             QPushButton {
                 background-color: #ff1493;
@@ -179,43 +174,43 @@ class PetControlPanel(QWidget):
                 "icon_0": "assets/lvl_butt1.png",
                 "icon_1": "assets/lvl_butt0.png",
                 "text_func": lambda: f"Level up Button: extend XP bar\nCurrent cost: {self.pet.max_xp}",
-                "callback": self.lvl_up
+                "callback": lambda: lvl_up(self),
             },
             {
                 "icon_0": "assets/reg_butt0.png",
                 "icon_1": "assets/reg_butt1.png",
                 "text_func": lambda: f"Bladder auto refills \nCurrent cost: {self.pet.auto_poo_refill_upgrade_cost}",
-                "callback": self.reg_button
+                "callback": lambda: reg_button(self),
             },
             {
                 "icon_0": "assets/reg_time_butt0.png",
                 "icon_1": "assets/reg_time_butt1.png",
                 "text_func": lambda: f"Bladder regen speed \nCurrent cost: {self.pet.bladder_regen_speed_cost}",
-                "callback": self.reg_button_time
+                "callback": lambda: reg_button_time(self),
             },
             {
                 "icon_0": "assets/bladextend_butt0.png",
                 "icon_1": "assets/bladextend_butt1.png",
                 "text_func": lambda: f"More bladder storage \nCurrent cost: {self.pet.bladder_extend_cost}",
-                "callback": self.extend_bladder_capacity
+                "callback": lambda: extend_bladder_capacity(self),
             },
             {
                 "icon_0": "assets/less_bladder_use_to_poop_butt0.png",
                 "icon_1": "assets/less_bladder_use_to_poop_butt1.png",
                 "text_func": lambda: f"Less bladder used when pooping \nCurrent cost: {self.pet.less_bladder_use_cost}",
-                "callback": self.less_bladder_use
+                "callback": lambda: less_bladder_use(self),
             },
             {
                 "icon_0": "assets/nutrition_up0.png",
                 "icon_1": "assets/nutrition_up1.png",
                 "text_func": lambda: f"Poop is more nutritious \nCurrent cost: {self.pet.poo_return_more_bladder_cost}",
-                "callback": self.poo_return_more_bladder
+                "callback": lambda: poo_return_more_bladder(self),
             },
             {
                 "icon_0": "assets/auto_poop_up0.png",
                 "icon_1": "assets/auto_poop_up1.png",
                 "text_func": lambda: f"Pet poops on its own \nCurrent cost: {self.pet.auto_poop_cost}",
-                "callback": self.auto_poop
+                "callback": lambda: auto_poop(self),
             },
             {
                 "icon_0": "assets/double_poop_up1.png",
@@ -223,12 +218,12 @@ class PetControlPanel(QWidget):
                 "text_func": lambda: "Pet produces double the poop",
                 "callback": self.double_poop_production
             },
-            # {
-            #     "icon_0": "assets/toggle_window0.png",
-            #     "icon_1": "assets/toggle_window1.png",
-            #     "text_func": lambda: "Move pet from screen to island",
-            #     "callback": self.save_exit
-            # },
+            {
+                "icon_0": "assets/toggle_window0.png",
+                "icon_1": "assets/toggle_window1.png",
+                "text_func": lambda: "Move pet from screen to island",
+                "callback": self.save_exit
+            },
         ]
         for index, info in enumerate(buttons_info):
             initial_text = info.get("text", "")
@@ -247,90 +242,9 @@ class PetControlPanel(QWidget):
 
     def double_poop_production(self):
         pass
+
     def save_exit(self):
         QApplication.quit()
-
-    def lvl_up(self):
-        if self.xp_bar.value() < self.pet.max_xp:
-            self.info_label.setText("XP not full! Cannot level up.")
-            return
-        old_max = self.pet.max_xp
-        new_max = int(old_max * 1.45)
-        self.set_max_xp(new_max)
-        self.xp_bar.setValue(0)
-        self.increase_xp(self.pet.stored_overflow_xp)
-        self.pet.stored_overflow_xp = 0
-        self.info_label.setText(f"Level Up! Max XP increased to {self.pet.max_xp}.")
-
-    def reg_button(self):
-        current_xp = self.xp_bar.value()
-        if current_xp >= self.pet.auto_poo_refill_upgrade_cost:
-            self.xp_bar.setValue(current_xp - self.pet.auto_poo_refill_upgrade_cost)
-            self.pet.poo_units_refil_time_value += 1
-            self.pet.auto_poo_refill_upgrade_cost *= 50
-            self.info_label.setText(f"Upgrade success! Next cost: {self.pet.auto_poo_refill_upgrade_cost} XP")
-        else:
-            self.info_label.setText(f"Need {self.pet.auto_poo_refill_upgrade_cost} XP! You have {current_xp}.")
-
-    def reg_button_time(self):
-        current_xp = self.xp_bar.value()
-        if current_xp >= self.pet.bladder_regen_speed_cost:
-            self.xp_bar.setValue(current_xp - self.pet.bladder_regen_speed_cost)
-            self.pet.bladder_refil_timer -= 100
-            self.pet.bladder_regen_speed_cost *= 30
-            self.info_label.setText(f"Upgrade success! Next cost: {self.pet.bladder_regen_speed_cost} XP")
-        else:
-            self.info_label.setText(f"Need {self.pet.bladder_regen_speed_cost} XP! You have {current_xp}.")
-
-    def extend_bladder_capacity(self):
-        current_xp = self.xp_bar.value()
-        if current_xp >= self.pet.bladder_extend_cost:
-            self.xp_bar.setValue(current_xp - self.pet.bladder_extend_cost)   
-            old_cap = self.pet.bladder_bar_cap
-            new_cap = int(old_cap * 1.1)
-            self.set_max_bladder(new_cap)
-            self.pet.bladder_extend_cost *= 30
-            self.info_label.setText(f"Bladder extended to {new_cap}. Next upgrade: {self.pet.bladder_extend_cost} XP")
-        else:
-            self.info_label.setText(f"Need {self.pet.bladder_extend_cost} XP! You have {current_xp}.")
-
-    def less_bladder_use(self):
-        current_xp = self.xp_bar.value()
-        if current_xp >= self.pet.less_bladder_use_cost:
-            self.xp_bar.setValue(current_xp - self.pet.less_bladder_use_cost)
-            normal_poo = POO_TYPES["normal"]
-            new_decrese_value = max(normal_poo.bladder_value_decrese - 1, 0)
-            POO_TYPES["normal"] = replace(normal_poo, bladder_value_decrese=new_decrese_value)
-            self.pet.less_bladder_use_cost *= 50
-            self.info_label.setText(f"Upgrade success! Next cost: {self.pet.less_bladder_use_cost} XP")
-        else:
-            self.info_label.setText(f"Need {self.pet.less_bladder_use_cost} XP! You have {current_xp}.")
-   
-    def poo_return_more_bladder(self):
-        current_xp = self.xp_bar.value()
-        if current_xp >= self.pet.poo_return_more_bladder_cost:
-            self.xp_bar.setValue(current_xp - self.pet.poo_return_more_bladder_cost)
-            normal_poo = POO_TYPES["normal"]
-            new_return_value = normal_poo.bladder_value_return + 1
-            POO_TYPES["normal"] = replace(normal_poo, bladder_value_return=new_return_value)
-            self.pet.poo_return_more_bladder_cost *= 50
-            self.info_label.setText(f"Upgrade success! Next cost: {self.pet.poo_return_more_bladder_cost} XP")
-        else:
-            self.info_label.setText(f"Need {self.pet.poo_return_more_bladder_cost} XP! You have {current_xp}.")
-
-    def auto_poop(self):
-        current_xp = self.xp_bar.value()
-        if current_xp >= self.pet.auto_poop_cost:
-            self.xp_bar.setValue(current_xp - self.pet.auto_poop_cost)
-            if not self.pet.poop_auto_timer.isActive():
-                self.pet.poop_auto_timer.start(self.pet.auto_poop_interval)
-            else:
-                self.auto_poop_interval = max(2500, self.pet.auto_poop_interval - 100)
-                self.pet.poop_auto_timer.start(self.pet.auto_poop_interval)
-            self.pet.auto_poop_cost *= 50
-            self.info_label.setText(f"Upgrade success! Next cost: {self.pet.auto_poop_cost} XP")
-        else:
-            self.info_label.setText(f"Need {self.pet.auto_poop_cost} XP! You have {current_xp}.")
 
     def update_info(self, text):
         self.info_label.setText(text)
@@ -351,7 +265,6 @@ class PetControlPanel(QWidget):
     def increase_xp(self, amount):
         current_xp = self.xp_bar.value()
         total_xp = current_xp + amount
-
         if total_xp > self.pet.max_xp:
             overflow = total_xp - self.pet.max_xp
             self.xp_bar.setValue(self.pet.max_xp)
@@ -375,22 +288,6 @@ class PetControlPanel(QWidget):
             self.poop_bar.setValue(new_max_b)
         self.poop_bar.setFormat(f"Bladder: %v/{new_max_b}")
 
-    def try_to_poop(self):
-        if self.pet.gravity_timer.isActive() or self.pet.is_dragging:
-            self.poop_button.setText("Can't poop in air")
-            self.poop_button.setEnabled(False)
-            QTimer.singleShot(1500, self.reset_button_text)
-            return
-        if self.poop_button.isEnabled():
-            if self.poop_bar.value() >= POO_TYPES["normal"].bladder_value_decrese:
-                self.poop_bar.setValue(self.poop_bar.value() - POO_TYPES["normal"].bladder_value_decrese)
-                self.pet.poop()
-                self.lock_button(1000)
-            else:
-                self.poop_button.setText("Too tired to poop")
-                self.poop_button.setEnabled(False)
-                QTimer.singleShot(1500, self.reset_button_text)
-
     def reset_button_text(self):
         self.poop_button.setText("Poop")
         self.poop_button.setEnabled(True)
@@ -398,7 +295,3 @@ class PetControlPanel(QWidget):
     def lock_button(self, duration_ms):
         self.poop_button.setEnabled(False)
         QTimer.singleShot(duration_ms, lambda: self.poop_button.setEnabled(True))
-
-
-
-
