@@ -15,25 +15,47 @@ class PetControlPanel(QWidget):
         
         self.setStyleSheet("""
             QWidget {
-                background-color: qlineargradient(
-                    x1:0, y1:0, x2:1, y2:1,
-                    stop:0 #4b0082,
-                    stop:1 #00ffff
-                );
+                background-color: transparent;
                 color: white;
                 font-family: 'Comic Sans MS', 'Arial', sans-serif;
             }
+
+            QLabel {
+                background-color: transparent;
+                color: white;
+            }
+
+            QPushButton {
+                background-color: rgba(255, 255, 255, 0.1);
+                color: white;
+                border: 1px solid white;
+                border-radius: 5px;
+                padding: 4px;
+            }
+            QPushButton:hover {
+                background-color: rgba(255, 255, 255, 0.2);
+            }
+
+            QProgressBar {
+                background-color: rgba(255, 255, 255, 0.1);
+                border: 1px solid white;
+                border-radius: 5px;
+                text-align: center;
+                color: white;
+            }
+            QProgressBar::chunk {
+                background-color: rgba(0, 255, 255, 0.5);
+            }
         """)
 
+        self.setAttribute(Qt.WA_TranslucentBackground, True)
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Tool)
         self.space_shortcut = QShortcut(QKeySequence("Space"), self)
         self.space_shortcut.activated.connect(self.try_to_poop)
-
         layout = QVBoxLayout()
         layout.setSpacing(20)
-
         self.poop_bar = self.create_bladder_bar()
         self.xp_bar = self.create_xp_bar()
-
         self.info_label = QLabel("")
         self.info_label.setFixedHeight(self.pet.text_bar_size)
         self.info_label.setAlignment(Qt.AlignCenter)
@@ -62,6 +84,22 @@ class PetControlPanel(QWidget):
         self.poop_refill_timer = QTimer(self)
         self.poop_refill_timer.timeout.connect(self.refill_poop_bar_in_time)
         self.poop_refill_timer.start(self.pet.bladder_refil_timer)
+
+        self._drag_pos = None  # Store drag start position
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self._drag_pos = event.globalPos() - self.frameGeometry().topLeft()
+            event.accept()
+
+    def mouseMoveEvent(self, event):
+        if event.buttons() & Qt.LeftButton and self._drag_pos:
+            self.move(event.globalPos() - self._drag_pos)
+            event.accept()
+
+    def mouseReleaseEvent(self, event):
+        self._drag_pos = None
+        event.accept()
 
     def create_bladder_bar(self):
         bar = QProgressBar()
