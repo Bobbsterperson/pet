@@ -30,3 +30,5 @@ def initialize_settings(self):
     self.bladder_bar_cap = 100
 
     self.text_bar_size = 80
+
+    self.always_on_top = False

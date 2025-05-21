@@ -69,7 +69,7 @@ class InfoIconButton(QPushButton):
     def pressed_style(self):
         return """
         QPushButton {
-            background-color: #bbb;
+            background-color: #fbb;
             border: 2px solid #666;
             border-radius: 10px;
         }
