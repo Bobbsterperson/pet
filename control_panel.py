@@ -1,6 +1,5 @@
-from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QProgressBar, QLabel, QHBoxLayout, QGridLayout, QShortcut
+from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QProgressBar, QLabel, QHBoxLayout, QGridLayout, QShortcut, QApplication, QSpacerItem, QSizePolicy
 from PyQt5.QtCore import Qt, QTimer
-
 from poo import POO_TYPES
 from info_icon_button import InfoIconButton
 from PyQt5.QtGui import QKeySequence
@@ -11,15 +10,13 @@ class PetControlPanel(QWidget):
         super().__init__()
         self.pet = pet
         self.setWindowTitle("Control Panel")
-        self.setFixedSize(600, 1000)
-        
+        self.setFixedSize(1000, 600)
         self.setStyleSheet("""
             QWidget {
                 background-color: transparent;
                 color: white;
                 font-family: 'Comic Sans MS', 'Arial', sans-serif;
             }
-
             QLabel {
                 background-color: transparent;
                 color: white;
@@ -48,7 +45,7 @@ class PetControlPanel(QWidget):
             }
         """)
 
-        self.setAttribute(Qt.WA_TranslucentBackground, True)
+        self.setAttribute(Qt.WA_TranslucentBackground, True) # toggle transparent background for the control panel
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Tool)
         self.space_shortcut = QShortcut(QKeySequence("Space"), self)
         self.space_shortcut.activated.connect(self.try_to_poop)
@@ -226,12 +223,12 @@ class PetControlPanel(QWidget):
                 "text_func": lambda: "Pet produces double the poop",
                 "callback": self.double_poop_production
             },
-            {
-                "icon_0": "assets/toggle_window0.png",
-                "icon_1": "assets/toggle_window1.png",
-                "text_func": lambda: "Move pet from screen to island",
-                "callback": self.toggle_window
-            },
+            # {
+            #     "icon_0": "assets/toggle_window0.png",
+            #     "icon_1": "assets/toggle_window1.png",
+            #     "text_func": lambda: "Move pet from screen to island",
+            #     "callback": self.save_exit
+            # },
         ]
         for index, info in enumerate(buttons_info):
             initial_text = info.get("text", "")
@@ -243,15 +240,15 @@ class PetControlPanel(QWidget):
                 button.hovered.connect(lambda _, t=initial_text: self.update_info(t))
             button.unhovered.connect(self.clear_info)
             button.clicked.connect(info["callback"])
-            row = index // 4
-            col = index % 4
+            row = index // 8
+            col = index % 8
             grid_layout.addWidget(button, row, col)
         parent_layout.addLayout(grid_layout)
 
     def double_poop_production(self):
         pass
-    def toggle_window(self):
-        pass
+    def save_exit(self):
+        QApplication.quit()
 
     def lvl_up(self):
         if self.xp_bar.value() < self.pet.max_xp:
@@ -401,3 +398,7 @@ class PetControlPanel(QWidget):
     def lock_button(self, duration_ms):
         self.poop_button.setEnabled(False)
         QTimer.singleShot(duration_ms, lambda: self.poop_button.setEnabled(True))
+
+
+
+
