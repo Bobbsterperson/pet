@@ -1,15 +1,17 @@
 import sys, random
-from PyQt5.QtCore import Qt, QTimer, QDateTime
+from PyQt5.QtCore import Qt, QTimer, QDateTime, pyqtSignal
 from PyQt5.QtGui import QTransform
 from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget
 from control_panel import PetControlPanel
 from poo import Poo, POO_TYPES
+from PyQt5.QtGui import QPixmap
 from timers import setup_timers
 from sound import initialize_sounds
 from settings import initialize_settings
 from sprites import initialize_sprites
 
 class Pet(QWidget):
+    sprite_changed = pyqtSignal(QPixmap)
     def __init__(self):
         super().__init__()
         self.setup_window()
@@ -17,7 +19,7 @@ class Pet(QWidget):
         initialize_sprites(self)
         initialize_sounds(self)
         setup_timers(self)
-        self.setup_position()
+        self.setup_position() 
 
     def setup_window(self):
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
@@ -44,7 +46,12 @@ class Pet(QWidget):
         if self.direction == "left" and not self.is_dragging:
             pix = pix.transformed(QTransform().scale(-1, 1))
         self.label.setPixmap(pix)
+        self.current_pixmap = pix
+        self.sprite_changed.emit(pix)
         self.frame += 1
+
+    def get_current_pixmap(self):
+        return getattr(self, "current_pixmap", QPixmap("assets/idle0.png"))
 
     def move_pet(self):
         if self.old_pos is not None or self.gravity_timer.isActive():

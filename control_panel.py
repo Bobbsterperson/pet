@@ -10,10 +10,10 @@ class PetControlPanel(QWidget):
         super().__init__()
         self.pet = pet
         self.upgrades = PetUpgradeManager(self)
-        
+        self.pet.sprite_changed.connect(self.update_pet_frame)
 
         self.setWindowTitle("Control Panel")
-        self.setFixedSize(1000, 550)
+        self.setFixedSize(1000, 460)
         self.setStyleSheet("""
             QWidget {
                 background-color: transparent;
@@ -86,7 +86,6 @@ class PetControlPanel(QWidget):
             }
         """)
         self.bars_container.addWidget(self.info_label)
-
         layout.addLayout(self.bars_container)
 
         # Create upgrades container widget and layout
@@ -104,7 +103,7 @@ class PetControlPanel(QWidget):
         self.add_skill_buttons(skills_layout)
         layout.addWidget(self.skills_widget)
         self.skills_widget.setVisible(False) # to hide it on start
-
+        self.upgrades_widget.setVisible(False)
         # Poop button
         self.poop_button = self.create_poop_button()
         layout.addWidget(self.poop_button)
@@ -267,10 +266,10 @@ class PetControlPanel(QWidget):
         grid_layout = QGridLayout()
         buttons_info = [
             {
-                "icon_0": "assets/achivements0.png",
-                "icon_1": "assets/achivements1.png",
-                "text_func": lambda: "Achivements",
-                "callback": self.hide_achivements
+                "icon_0": "assets/upgrades0.png",
+                "icon_1": "assets/upgrades1.png",
+                "text_func": lambda: "Upgrades",
+                "callback": self.hide_upgrades
             },
             {
                 "icon_0": "assets/skill0.png",
@@ -285,10 +284,10 @@ class PetControlPanel(QWidget):
                 "callback": self.hide_bars
             },
             {
-                "icon_0": "assets/upgrades0.png",
-                "icon_1": "assets/upgrades1.png",
-                "text_func": lambda: "Upgrades",
-                "callback": self.hide_upgrades
+                "icon_0": "assets/achivements0.png",
+                "icon_1": "assets/achivements1.png",
+                "text_func": lambda: "Achivements",
+                "callback": self.hide_achivements
             },
             {
                 "icon_0": "assets/size_down0.png",
@@ -334,7 +333,20 @@ class PetControlPanel(QWidget):
             row = index // 10
             col = index % 10
             grid_layout.addWidget(button, row, col)
+
+        self.pet_frame_label = QLabel()
+        label_height = 114
+        self.pet_frame_label.setFixedHeight(label_height)
+        pet_pixmap = self.pet.get_current_pixmap()
+        aspect_ratio = pet_pixmap.width() / pet_pixmap.height()
+        label_width = int(label_height * aspect_ratio)
+        self.pet_frame_label.setFixedWidth(label_width)
+        self.pet_frame_label.setPixmap(pet_pixmap)
+        self.pet_frame_label.setScaledContents(True)
+
+        outer_layout.addSpacing(15)
         outer_layout.addLayout(grid_layout)
+        outer_layout.addWidget(self.pet_frame_label)
         parent_layout.addLayout(outer_layout)
 
     def add_skill_buttons(self, parent_layout):
@@ -536,19 +548,14 @@ class PetControlPanel(QWidget):
         self.setFixedSize(base_width, final_height)
 
 
-    # def populate_info_buttons(self, buttons_info, grid_layout, update_info_func, clear_info_func):
-    #     for index, info in enumerate(buttons_info):
-    #         initial_text = info.get("text", "")
-    #         button = InfoIconButton(info["icon_0"], info["icon_1"], initial_text)
-    #         text_func = info.get("text_func")
-    #         if text_func:
-    #             button.hovered.connect(lambda _, f=text_func: update_info_func(f()))
-    #         else:
-    #             button.hovered.connect(lambda _, t=initial_text: update_info_func(t))
-    #         button.unhovered.connect(clear_info_func)
-    #         button.clicked.connect(info["callback"])
-    #         row = index // 10
-    #         col = index % 10
-    #         grid_layout.addWidget(button, row, col)
+    def update_pet_frame(self):
+        pet_pixmap = self.pet.get_current_pixmap()
+        if pet_pixmap:
+            label_height = self.pet_frame_label.height()
+            aspect_ratio = pet_pixmap.width() / pet_pixmap.height()
+            label_width = int(label_height * aspect_ratio)
+            self.pet_frame_label.setFixedWidth(label_width)
+            self.pet_frame_label.setPixmap(pet_pixmap)
+
 
 
