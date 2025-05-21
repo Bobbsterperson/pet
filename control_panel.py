@@ -240,13 +240,23 @@ class PetControlPanel(QWidget):
             grid_layout.addWidget(button, row, col)
         parent_layout.addLayout(grid_layout)
 
-
-
     def add_menu_buttons(self, parent_layout):
         outer_layout = QHBoxLayout()
         outer_layout.addStretch()
         grid_layout = QGridLayout()
         buttons_info = [
+            {
+                "icon_0": "assets/size_down0.png",
+                "icon_1": "assets/size_down1.png",
+                "text_func": lambda: "Panel size down",
+                "callback": self.panel_size_down
+            },
+            {
+                "icon_0": "assets/size_up0.png",
+                "icon_1": "assets/size_up1.png",
+                "text_func": lambda: "Panel size up",
+                "callback": self.panel_size_up
+            },
             {
                 "icon_0": "assets/on_top0.png",
                 "icon_1": "assets/on_top1.png",
@@ -276,11 +286,26 @@ class PetControlPanel(QWidget):
                 button.hovered.connect(lambda _, t=initial_text: self.update_info(t))
             button.unhovered.connect(self.clear_info)
             button.clicked.connect(info["callback"])
-            row = index // 3
-            col = index % 3
+            row = index // 8
+            col = index % 8
             grid_layout.addWidget(button, row, col)
         outer_layout.addLayout(grid_layout)
         parent_layout.addLayout(outer_layout)
+
+    def double_poop_production(self):
+        pass
+
+    def panel_size_up(self):
+        current_size = self.size()
+        new_width = min(current_size.width() + 50, 1600)
+        new_height = min(current_size.height() + 50, 1000)
+        self.setFixedSize(new_width, new_height)
+
+    def panel_size_down(self):
+        current_size = self.size()
+        new_width = max(900, current_size.width() - 50)
+        new_height = max(500, current_size.height() - 50)
+        self.setFixedSize(new_width, new_height)
 
     def minimise_panel(self):
         self.showMinimized()
@@ -293,9 +318,6 @@ class PetControlPanel(QWidget):
             self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint)
             self.pet.always_on_top = False
         self.show()
-
-    def double_poop_production(self):
-        pass
 
     def save_exit(self):
         QApplication.quit()

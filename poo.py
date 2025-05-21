@@ -14,9 +14,18 @@ class PooType:
     size: float
 
 POO_TYPES = {
-    "normal": PooType("normal", [], 60000, 30, 10, 5, 0.5),
-    "golden": PooType("golden", [], 90000, 20, 25, 20, 0.5),
-    "spoiled": PooType("spoiled", [], 30000, 20, -5, 2, 0.5),
+    "normal": PooType("normal", [], 60000, 30, 10, 120, 0.4),
+    "weak": PooType("weak", [], 20000, 30, 7, 5, 0.2),
+    "runny": PooType("runny", [], 30000, 40, 10, 15, 0.3),
+    "hard": PooType("hard", [], 80000, 20, 20, 15, 0.5),
+    "corny": PooType("corny", [], 60000, 40, 20, 20, 0.5),
+    "chilly": PooType("chilly", [], 20000, 50, 20, 30, 0.5),
+    "toxic": PooType("toxic", [], 60000, 60, 80, 120, 0.7),
+    "monster": PooType("monster", [], 60000, 30, 10, 120, 0.5),
+    "bloody": PooType("bloody", [], 60000, 30, 10, 120, 0.5),
+    "egg": PooType("egg", [], 60000, 30, 10, 120, 0.5),
+    "silver": PooType("silver", [], 70000, 20, 25, 20, 0.5),
+    "golden": PooType("golden", [], 80000, 20, -5, 2, 0.5),
 }
 
 class Poo:
