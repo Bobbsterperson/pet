@@ -1,0 +1,195 @@
+panel =("""
+        QWidget {
+            background-color: transparent;
+            color: white;
+            font-family: 'Comic Sans MS', 'Arial', sans-serif;
+        }
+        QLabel {
+            background-color: transparent;
+            color: white;
+        }
+        QPushButton {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid white;
+            border-radius: 5px;
+            padding: 4px;
+        }
+        QPushButton:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        QProgressBar {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid white;
+            border-radius: 5px;
+            text-align: center;
+            color: white;
+        }
+        QProgressBar::chunk {
+            background-color: rgba(0, 255, 255, 0.5);
+        }
+    """)
+info_bar = ("""
+            QLabel {
+                font-size: 24px;
+                color: #ffffff;
+                background-color: rgba(0, 0, 0, 0.5);
+                border: 2px dashed #ff66cc;
+                border-radius: 8px;
+                padding: 4px;
+            }
+        """)
+bladder_bar = ("""
+            QProgressBar {
+                border: 2px solid #ffffff;
+                border-radius: 10px;
+                text-align: center;
+                font-weight: bold;
+                font-size: 18px;
+                color: #ff00ff;
+                height: 45px;
+                background-color: rgba(0, 0, 0, 0.3);
+            }
+            QProgressBar::chunk {
+                background-color: #39ff14;
+                border-radius: 10px;
+            }
+        """)
+xp_bar = ("""
+            QProgressBar {
+                border: 2px solid #ffffff;
+                border-radius: 10px;
+                text-align: center;
+                font-weight: bold;
+                font-size: 18px;
+                height: 45px;
+                background-color: rgba(0, 0, 0, 0.3);
+            }
+            QProgressBar::chunk {
+                background-color: #00bfff;
+                border-radius: 10px;
+            }
+        """)
+poop_btn = ("""
+            QPushButton {
+                background-color: #ff1493;
+                color: white;
+                font-size: 20px;
+                font-weight: bold;
+                border: 3px double white;
+                border-radius: 15px;
+                padding: 10px;
+
+            }
+            QPushButton:hover {
+                background-color: #ff69b4;
+            }
+            QPushButton:pressed {
+                background-color: #c71585;
+            }
+        """)
+def get_upgrade_btn(self):
+    return [
+            {
+                "icon_0": "assets/lvl_butt1.png",
+                "icon_1": "assets/lvl_butt0.png",
+                "text_func": lambda: f"Level up Button: extend XP bar, develop pet, extent poop variaty\nCurrent cost: {self.pet.max_xp}",
+                "callback":self.upgrades.lvl_up,
+            },
+            {
+                "icon_0": "assets/reg_butt0.png",
+                "icon_1": "assets/reg_butt1.png",
+                "text_func": lambda: f"Bladder auto refills \nCurrent cost: {self.pet.auto_poo_refill_upgrade_cost}",
+                "callback": self.upgrades.reg_button,
+            },
+            {
+                "icon_0": "assets/reg_time_butt0.png",
+                "icon_1": "assets/reg_time_butt1.png",
+                "text_func": lambda: f"Bladder regen speed \nCurrent cost: {self.pet.bladder_regen_speed_cost}",
+                "callback": self.upgrades.reg_button_time,
+            },
+            {
+                "icon_0": "assets/bladextend_butt0.png",
+                "icon_1": "assets/bladextend_butt1.png",
+                "text_func": lambda: f"More bladder storage \nCurrent cost: {self.pet.bladder_extend_cost}",
+                "callback": self.upgrades.extend_bladder_capacity,
+            },
+            {
+                "icon_0": "assets/less_bladder_use_to_poop_butt0.png",
+                "icon_1": "assets/less_bladder_use_to_poop_butt1.png",
+                "text_func": lambda: f"Less bladder used when pooping \nCurrent cost: {self.pet.less_bladder_use_cost}",
+                "callback": self.upgrades.less_bladder_use,
+            },
+            {
+                "icon_0": "assets/nutrition_up0.png",
+                "icon_1": "assets/nutrition_up1.png",
+                "text_func": lambda: f"Poop is more nutritious \nCurrent cost: {self.pet.poo_return_more_bladder_cost}",
+                "callback": self.upgrades.poo_return_more_bladder,
+            },
+            {
+                "icon_0": "assets/auto_poop_up0.png",
+                "icon_1": "assets/auto_poop_up1.png",
+                "text_func": lambda: f"Pet poops on its own \nCurrent cost: {self.pet.auto_poop_cost}",
+                "callback": self.upgrades.auto_poop,
+            },
+        ]
+def get_menu_btn(self):
+    return [
+            {
+                "icon_0": "assets/upgrades0.png",
+                "icon_1": "assets/upgrades1.png",
+                "text_func": lambda: "Upgrades",
+                "callback": self.hide_upgrades
+            },
+            {
+                "icon_0": "assets/skill0.png",
+                "icon_1": "assets/skill1.png",
+                "text_func": lambda: "Skills",
+                "callback": self.hide_skills
+            },
+            {
+                "icon_0": "assets/bars0.png",
+                "icon_1": "assets/bars1.png",
+                "text_func": lambda: "Bars",
+                "callback": self.hide_bars
+            },
+            {
+                "icon_0": "assets/achivements0.png",
+                "icon_1": "assets/achivements1.png",
+                "text_func": lambda: "Achivements",
+                "callback": self.hide_achivements
+            },
+            {
+                "icon_0": "assets/on_top0.png",
+                "icon_1": "assets/on_top1.png",
+                "text_func": lambda: "Panel always on top",
+                "callback": self.panel_always_on_top
+            },
+            {
+                "icon_0": "assets/minimize0.png",
+                "icon_1": "assets/minimize1.png",
+                "text_func": lambda: "minimise_panel",
+                "callback": self.minimise_panel
+            },
+            {
+                "icon_0": "assets/island0.png",
+                "icon_1": "assets/island1.png",
+                "text_func": lambda: "Island/fullscreen",
+                "callback": self.island
+            },
+            {
+                "icon_0": "assets/save_exit0.png",
+                "icon_1": "assets/save_exit1.png",
+                "text_func": lambda: "Save and exit",
+                "callback": self.save_exit
+            },
+        ]
+def get_skill_btn(self):
+    return [
+            {
+                "icon_0": "assets/double_poop_up1.png",
+                "icon_1": "assets/double_poop_up0.png",
+                "text_func": lambda: "Pet produces double the poop",
+                "callback": self.double_poop_production
+            },
+        ]

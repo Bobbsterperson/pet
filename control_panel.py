@@ -1,9 +1,10 @@
-from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QProgressBar, QLabel, QHBoxLayout, QGridLayout, QShortcut, QApplication
+from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QProgressBar, QLabel, QHBoxLayout, QGridLayout, QShortcut, QApplication, QLayout
 from PyQt5.QtCore import Qt, QTimer
 from info_icon_button import InfoIconButton
 from PyQt5.QtGui import QKeySequence
 from pet_upgrade_manager import PetUpgradeManager
 from poo import POO_TYPES
+from panel_stylesheets import panel, info_bar, bladder_bar, xp_bar, poop_btn, get_upgrade_btn, get_menu_btn, get_skill_btn
 
 class PetControlPanel(QWidget):
     def __init__(self, pet):
@@ -11,40 +12,11 @@ class PetControlPanel(QWidget):
         self.pet = pet
         self.upgrades = PetUpgradeManager(self)
         self.pet.sprite_changed.connect(self.update_pet_frame)
+        self.current_level = 0
 
         self.setWindowTitle("Control Panel")
         self.setFixedSize(1000, 460)
-        self.setStyleSheet("""
-            QWidget {
-                background-color: transparent;
-                color: white;
-                font-family: 'Comic Sans MS', 'Arial', sans-serif;
-            }
-            QLabel {
-                background-color: transparent;
-                color: white;
-            }
-            QPushButton {
-                background-color: rgba(255, 255, 255, 0.1);
-                color: white;
-                border: 1px solid white;
-                border-radius: 5px;
-                padding: 4px;
-            }
-            QPushButton:hover {
-                background-color: rgba(255, 255, 255, 0.2);
-            }
-            QProgressBar {
-                background-color: rgba(255, 255, 255, 0.1);
-                border: 1px solid white;
-                border-radius: 5px;
-                text-align: center;
-                color: white;
-            }
-            QProgressBar::chunk {
-                background-color: rgba(0, 255, 255, 0.5);
-            }
-        """)
+        self.setStyleSheet(panel)
 
         self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
@@ -75,16 +47,7 @@ class PetControlPanel(QWidget):
         self.info_label = QLabel("")
         self.info_label.setFixedHeight(self.pet.text_bar_size)
         self.info_label.setAlignment(Qt.AlignCenter)
-        self.info_label.setStyleSheet("""
-            QLabel {
-                font-size: 24px;
-                color: #ffffff;
-                background-color: rgba(0, 0, 0, 0.5);
-                border: 2px dashed #ff66cc;
-                border-radius: 8px;
-                padding: 4px;
-            }
-        """)
+        self.info_label.setStyleSheet(info_bar)
         self.bars_container.addWidget(self.info_label)
         layout.addLayout(self.bars_container)
 
@@ -115,10 +78,7 @@ class PetControlPanel(QWidget):
         self.poop_refill_timer = QTimer(self)
         self.poop_refill_timer.timeout.connect(self.refill_poop_bar_in_time)
         self.poop_refill_timer.start(self.pet.bladder_refil_timer)
-
         self._drag_pos = None
-
-
 
     def create_bladder_bar(self):
         bar = QProgressBar()
@@ -126,22 +86,7 @@ class PetControlPanel(QWidget):
         bar.setValue(100)
         bar.setTextVisible(True)
         bar.setFormat("Bladder: %v/%m")
-        bar.setStyleSheet("""
-            QProgressBar {
-                border: 2px solid #ffffff;
-                border-radius: 10px;
-                text-align: center;
-                font-weight: bold;
-                font-size: 18px;
-                color: #ff00ff;
-                height: 45px;
-                background-color: rgba(0, 0, 0, 0.3);
-            }
-            QProgressBar::chunk {
-                background-color: #39ff14;
-                border-radius: 10px;
-            }
-        """)
+        bar.setStyleSheet(bladder_bar)
         def update_format(value):
             bar.setFormat(f"Bladder: {value}/{bar.maximum()}")
         bar.valueChanged.connect(update_format)
@@ -152,188 +97,29 @@ class PetControlPanel(QWidget):
         bar.setRange(0, self.pet.max_xp)
         bar.setValue(0)
         bar.setTextVisible(True)
-        bar.setFormat("XP: %v/%m")
-        bar.setStyleSheet("""
-            QProgressBar {
-                border: 2px solid #ffffff;
-                border-radius: 10px;
-                text-align: center;
-                font-weight: bold;
-                font-size: 18px;
-                height: 45px;
-                background-color: rgba(0, 0, 0, 0.3);
-            }
-            QProgressBar::chunk {
-                background-color: #00bfff;
-                border-radius: 10px;
-            }
-        """)
+        bar.setFormat(f"Level {self.current_level} | XP: %v/%m")
+        bar.setStyleSheet(xp_bar)
         return bar
 
     def create_poop_button(self):
         button = QPushButton("Poop")
         button.setCursor(Qt.PointingHandCursor)
         button.clicked.connect(self.try_to_poop)
-        button.setStyleSheet("""
-            QPushButton {
-                background-color: #ff1493;
-                color: white;
-                font-size: 20px;
-                font-weight: bold;
-                border: 3px double white;
-                border-radius: 15px;
-                padding: 10px;
-
-            }
-            QPushButton:hover {
-                background-color: #ff69b4;
-            }
-            QPushButton:pressed {
-                background-color: #c71585;
-            }
-        """)
+        button.setStyleSheet(poop_btn)
         return button
 
     def add_upgrade_buttons(self, parent_layout):
-        outer_layout = QHBoxLayout()
-        outer_layout.addStretch()
-        grid_layout = QGridLayout()
-        buttons_info = [
-            {
-                "icon_0": "assets/lvl_butt1.png",
-                "icon_1": "assets/lvl_butt0.png",
-                "text_func": lambda: f"Level up Button: extend XP bar\nCurrent cost: {self.pet.max_xp}",
-                "callback":self.upgrades.lvl_up,
-            },
-            {
-                "icon_0": "assets/reg_butt0.png",
-                "icon_1": "assets/reg_butt1.png",
-                "text_func": lambda: f"Bladder auto refills \nCurrent cost: {self.pet.auto_poo_refill_upgrade_cost}",
-                "callback": self.upgrades.reg_button,
-            },
-            {
-                "icon_0": "assets/reg_time_butt0.png",
-                "icon_1": "assets/reg_time_butt1.png",
-                "text_func": lambda: f"Bladder regen speed \nCurrent cost: {self.pet.bladder_regen_speed_cost}",
-                "callback": self.upgrades.reg_button_time,
-            },
-            {
-                "icon_0": "assets/bladextend_butt0.png",
-                "icon_1": "assets/bladextend_butt1.png",
-                "text_func": lambda: f"More bladder storage \nCurrent cost: {self.pet.bladder_extend_cost}",
-                "callback": self.upgrades.extend_bladder_capacity,
-            },
-            {
-                "icon_0": "assets/less_bladder_use_to_poop_butt0.png",
-                "icon_1": "assets/less_bladder_use_to_poop_butt1.png",
-                "text_func": lambda: f"Less bladder used when pooping \nCurrent cost: {self.pet.less_bladder_use_cost}",
-                "callback": self.upgrades.less_bladder_use,
-            },
-            {
-                "icon_0": "assets/nutrition_up0.png",
-                "icon_1": "assets/nutrition_up1.png",
-                "text_func": lambda: f"Poop is more nutritious \nCurrent cost: {self.pet.poo_return_more_bladder_cost}",
-                "callback": self.upgrades.poo_return_more_bladder,
-            },
-            {
-                "icon_0": "assets/auto_poop_up0.png",
-                "icon_1": "assets/auto_poop_up1.png",
-                "text_func": lambda: f"Pet poops on its own \nCurrent cost: {self.pet.auto_poop_cost}",
-                "callback": self.upgrades.auto_poop,
-            },
-        ]
-        for index, info in enumerate(buttons_info):
-            initial_text = info.get("text", "")
-            button = InfoIconButton(info["icon_0"], info["icon_1"], initial_text)
-            text_func = info.get("text_func")
-            if text_func:
-                button.hovered.connect(lambda _, f=text_func: self.update_info(f()))
-            else:
-                button.hovered.connect(lambda _, t=initial_text: self.update_info(t))
-            button.unhovered.connect(self.clear_info)
-            button.clicked.connect(info["callback"])
-            row = index // 10
-            col = index % 10
-            grid_layout.addWidget(button, row, col)
-        outer_layout.addLayout(grid_layout)
-        parent_layout.addLayout(outer_layout)
+        buttons_info = get_upgrade_btn(self)
+        self.add_buttons(parent_layout, buttons_info)
 
-        parent_layout.addLayout(grid_layout)
+    def add_skill_buttons(self, parent_layout):
+        buttons_info = get_skill_btn(self)
+        self.add_buttons(parent_layout, buttons_info)
 
     def add_menu_buttons(self, parent_layout):
-        outer_layout = QHBoxLayout()
-        outer_layout.addStretch()
-        grid_layout = QGridLayout()
-        buttons_info = [
-            {
-                "icon_0": "assets/upgrades0.png",
-                "icon_1": "assets/upgrades1.png",
-                "text_func": lambda: "Upgrades",
-                "callback": self.hide_upgrades
-            },
-            {
-                "icon_0": "assets/skill0.png",
-                "icon_1": "assets/skill1.png",
-                "text_func": lambda: "Skills",
-                "callback": self.hide_skills
-            },
-            {
-                "icon_0": "assets/bars0.png",
-                "icon_1": "assets/bars1.png",
-                "text_func": lambda: "Bars",
-                "callback": self.hide_bars
-            },
-            {
-                "icon_0": "assets/achivements0.png",
-                "icon_1": "assets/achivements1.png",
-                "text_func": lambda: "Achivements",
-                "callback": self.hide_achivements
-            },
-            {
-                "icon_0": "assets/size_down0.png",
-                "icon_1": "assets/size_down1.png",
-                "text_func": lambda: "Panel size down",
-                "callback": self.panel_size_down
-            },
-            {
-                "icon_0": "assets/size_up0.png",
-                "icon_1": "assets/size_up1.png",
-                "text_func": lambda: "Panel size up",
-                "callback": self.panel_size_up
-            },
-            {
-                "icon_0": "assets/on_top0.png",
-                "icon_1": "assets/on_top1.png",
-                "text_func": lambda: "Panel always on top",
-                "callback": self.panel_always_on_top
-            },
-            {
-                "icon_0": "assets/minimize0.png",
-                "icon_1": "assets/minimize1.png",
-                "text_func": lambda: "minimise_panel",
-                "callback": self.minimise_panel
-            },
-            {
-                "icon_0": "assets/save_exit0.png",
-                "icon_1": "assets/save_exit1.png",
-                "text_func": lambda: "Save",
-                "callback": self.save_exit
-            },
-        ]
-        for index, info in enumerate(buttons_info):
-            initial_text = info.get("text", "")
-            button = InfoIconButton(info["icon_0"], info["icon_1"], initial_text)
-            text_func = info.get("text_func")
-            if text_func:
-                button.hovered.connect(lambda _, f=text_func: self.update_info(f()))
-            else:
-                button.hovered.connect(lambda _, t=initial_text: self.update_info(t))
-            button.unhovered.connect(self.clear_info)
-            button.clicked.connect(info["callback"])
-            row = index // 10
-            col = index % 10
-            grid_layout.addWidget(button, row, col)
+        buttons_info = get_menu_btn(self)
 
+        # Prepare the extra pet QLabel for menu buttons
         self.pet_frame_label = QLabel()
         label_height = 114
         self.pet_frame_label.setFixedHeight(label_height)
@@ -344,23 +130,10 @@ class PetControlPanel(QWidget):
         self.pet_frame_label.setPixmap(pet_pixmap)
         self.pet_frame_label.setScaledContents(True)
 
-        outer_layout.addSpacing(15)
-        outer_layout.addLayout(grid_layout)
-        outer_layout.addWidget(self.pet_frame_label)
-        parent_layout.addLayout(outer_layout)
-
-    def add_skill_buttons(self, parent_layout):
-        outer_layout = QHBoxLayout()
-        outer_layout.addStretch()
+        # Use a horizontal layout for spacing + grid layout + pet label
+        extra_layout = QHBoxLayout()
+        extra_layout.addSpacing(15)
         grid_layout = QGridLayout()
-        buttons_info = [
-            {
-                "icon_0": "assets/double_poop_up1.png",
-                "icon_1": "assets/double_poop_up0.png",
-                "text_func": lambda: "Pet produces double the poop",
-                "callback": self.double_poop_production
-            },
-        ]
         for index, info in enumerate(buttons_info):
             initial_text = info.get("text", "")
             button = InfoIconButton(info["icon_0"], info["icon_1"], initial_text)
@@ -374,8 +147,12 @@ class PetControlPanel(QWidget):
             row = index // 10
             col = index % 10
             grid_layout.addWidget(button, row, col)
-        outer_layout.addLayout(grid_layout)
-        parent_layout.addLayout(outer_layout)
+        extra_layout.addLayout(grid_layout)
+        extra_layout.addWidget(self.pet_frame_label)
+
+        # Pass extra_layout to add_buttons
+        self.add_buttons(parent_layout, [], add_extra_widget=extra_layout)
+
 
     def double_poop_production(self):
         pass
@@ -401,18 +178,6 @@ class PetControlPanel(QWidget):
             is_visible = self.upgrades_widget.isVisible()
             self.upgrades_widget.setVisible(not is_visible)
             self.update_panel_size()
-
-    def panel_size_up(self):
-        current_size = self.size()
-        new_width = min(current_size.width() + 50, 1600)
-        new_height = min(current_size.height() + 50, 1000)
-        self.setFixedSize(new_width, new_height)
-
-    def panel_size_down(self):
-        current_size = self.size()
-        new_width = max(900, current_size.width() - 50)
-        new_height = max(500, current_size.height() - 50)
-        self.setFixedSize(new_width, new_height)
 
     def minimise_panel(self):
         self.showMinimized()
@@ -462,7 +227,7 @@ class PetControlPanel(QWidget):
         self.xp_bar.setRange(0, new_max)
         if self.xp_bar.value() > new_max:
             self.xp_bar.setValue(new_max)
-        self.xp_bar.setFormat(f"XP: %v/{new_max}")
+        self.xp_bar.setFormat(f"Level {self.current_level} | XP: %v/{new_max}")
 
     def set_max_bladder(self, new_max_b):
         self.pet.bladder_bar_cap = new_max_b
@@ -523,7 +288,6 @@ class PetControlPanel(QWidget):
                 if not is_first:
                     total_height += spacing
                 total_height += widget.sizeHint().height()
-
         widgets_in_order = [
             self.menu_buttons_widget if hasattr(self, 'menu_buttons_widget') else None,
             self.poop_bar,
@@ -533,7 +297,6 @@ class PetControlPanel(QWidget):
             self.skills_widget if hasattr(self, 'skills_widget') else None,
             self.poop_button
         ]
-
         first_visible_found = False
         for w in widgets_in_order:
             if w and w.isVisible():
@@ -544,9 +307,7 @@ class PetControlPanel(QWidget):
         min_height = 200
         max_height = 1000
         final_height = max(min_height, min(total_height, max_height))
-
         self.setFixedSize(base_width, final_height)
-
 
     def update_pet_frame(self):
         pet_pixmap = self.pet.get_current_pixmap()
@@ -557,5 +318,32 @@ class PetControlPanel(QWidget):
             self.pet_frame_label.setFixedWidth(label_width)
             self.pet_frame_label.setPixmap(pet_pixmap)
 
+    def add_buttons(self, parent_layout, buttons_info, add_extra_widget=None):
+        outer_layout = QHBoxLayout()
+        outer_layout.addStretch()
+        grid_layout = QGridLayout()
+        for index, info in enumerate(buttons_info):
+            initial_text = info.get("text", "")
+            button = InfoIconButton(info["icon_0"], info["icon_1"], initial_text)
+            text_func = info.get("text_func")
+            if text_func:
+                button.hovered.connect(lambda _, f=text_func: self.update_info(f()))
+            else:
+                button.hovered.connect(lambda _, t=initial_text: self.update_info(t))
+            button.unhovered.connect(self.clear_info)
+            button.clicked.connect(info["callback"])
+            row = index // 10
+            col = index % 10
+            grid_layout.addWidget(button, row, col)
+        outer_layout.addLayout(grid_layout)
+
+        # Optional extra widget or layout to add to the outer layout
+        if add_extra_widget:
+            if isinstance(add_extra_widget, QLayout):
+                outer_layout.addLayout(add_extra_widget)
+            else:
+                outer_layout.addWidget(add_extra_widget)
+
+        parent_layout.addLayout(outer_layout)
 
 

@@ -51,7 +51,7 @@ class Pet(QWidget):
         self.frame += 1
 
     def get_current_pixmap(self):
-        return getattr(self, "current_pixmap", QPixmap("assets/idle0.png"))
+        return getattr(self, "current_pixmap", QPixmap("pet/idle0.png"))
 
     def move_pet(self):
         if self.old_pos is not None or self.gravity_timer.isActive():
