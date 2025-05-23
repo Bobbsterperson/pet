@@ -228,7 +228,8 @@ class PetControlPanel(QWidget):
             if amount >= space_left:
                 self.xp_bar.setValue(max_xp)
                 amount -= space_left
-                self.upgrades.lvl_up()
+                self.upgrades.lvl_up()  # this should update self.pet.current_level internally
+                self.pet.change_pet_variant_on_level()  # update variant immediately after level up
             else:
                 self.xp_bar.setValue(current_xp + amount)
                 amount = 0

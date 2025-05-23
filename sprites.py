@@ -4,7 +4,9 @@ import random
 from poo import get_poo_types
 
 def initialize_sprites(self):
-    self.label = QLabel(self)
+    if not hasattr(self, 'label'):
+        self.label = QLabel(self)
+        self.label.show()
 
     POO_TYPES = get_poo_types()
 
@@ -16,24 +18,21 @@ def initialize_sprites(self):
             QPixmap(f"pet/{action}{self.sprite_variant}{i}.png") for i in range(4)
         ]
 
-    # Now that sprites exist, set pixmap on label
-    self.label.setPixmap(self.sprites["idle"][0])  # Ensure something is shown
-    self.label.show()  
+    self.label.setPixmap(self.sprites["idle"][0])
+    self.label.resize(self.label.pixmap().size())  # <-- Add this
+    self.resize(self.label.size())                  # <-- And this, to fit the label
 
     for name, poo_type in POO_TYPES.items():
         poo_type.sprites = [QPixmap(f"poo/{name}_{i}.png") for i in range(4)]
 
     self.poo_type = POO_TYPES["normal"]
 
-    # State defaults
     self.direction = random.choice(["left", "right"])
     self.frame = 0
     self.is_walking = True
     self.is_dragging = False
     self.old_pos = None
     self.velocity_y = 0
-    self.spawned_poo = []
 
-def set_sprite_variant(self, variant):
-    self.sprite_variant = variant
-    initialize_sprites(self)  # Re-initialize with the new variant
+    if not hasattr(self, 'spawned_poo'):
+        self.spawned_poo = []

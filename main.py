@@ -309,6 +309,19 @@ class Pet(QWidget):
         self.label.setPixmap(eat_frames[self.frame])
         self.frame += 1
 
+    def change_pet_variant_on_level(self):
+        if self.control_panel.current_level >= 5:
+            self.set_sprite_variant("1")
+        else:
+            self.set_sprite_variant("0")
+
+    def set_sprite_variant(self, variant):
+        self.sprite_variant = variant
+        initialize_sprites(self)
+        self.label.setPixmap(self.sprites["idle"][0])
+        self.label.resize(self.label.pixmap().size())  # resize again here
+        self.resize(self.label.size())
+        self.label.update()
 
 
 
