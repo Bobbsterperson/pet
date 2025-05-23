@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QProgressBar, QLabel, QHBoxLayout, QGridLayout, QShortcut, QApplication, QLayout
 from PyQt5.QtCore import Qt, QTimer
 from info_icon_button import InfoIconButton
-from PyQt5.QtGui import QKeySequence
+from PyQt5.QtGui import QKeySequence, QPixmap
 from pet_upgrade_manager import PetUpgradeManager
 from poo import get_poo_types
 import random
@@ -125,12 +125,20 @@ class PetControlPanel(QWidget):
         self.pet_frame_label = QLabel()
         label_height = 114
         self.pet_frame_label.setFixedHeight(label_height)
+
         pet_pixmap = self.pet.get_current_pixmap()
-        aspect_ratio = pet_pixmap.width() / pet_pixmap.height()
+        if pet_pixmap.isNull() or pet_pixmap.height() == 0:
+            # fallback pixmap or default aspect ratio
+            aspect_ratio = 1.0
+            pet_pixmap = QPixmap(100, 100)  # placeholder empty pixmap of 100x100
+        else:
+            aspect_ratio = pet_pixmap.width() / pet_pixmap.height()
+
         label_width = int(label_height * aspect_ratio)
         self.pet_frame_label.setFixedWidth(label_width)
         self.pet_frame_label.setPixmap(pet_pixmap)
         self.pet_frame_label.setScaledContents(True)
+
 
         # Use a horizontal layout for spacing + grid layout + pet label
         extra_layout = QHBoxLayout()
@@ -317,12 +325,13 @@ class PetControlPanel(QWidget):
 
     def update_pet_frame(self):
         pet_pixmap = self.pet.get_current_pixmap()
-        if pet_pixmap:
+        if pet_pixmap and not pet_pixmap.isNull() and pet_pixmap.height() > 0:
             label_height = self.pet_frame_label.height()
             aspect_ratio = pet_pixmap.width() / pet_pixmap.height()
             label_width = int(label_height * aspect_ratio)
             self.pet_frame_label.setFixedWidth(label_width)
             self.pet_frame_label.setPixmap(pet_pixmap)
+
 
     def add_buttons(self, parent_layout, buttons_info, add_extra_widget=None):
         outer_layout = QHBoxLayout()
