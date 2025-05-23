@@ -3,7 +3,8 @@ from PyQt5.QtCore import Qt, QTimer
 from info_icon_button import InfoIconButton
 from PyQt5.QtGui import QKeySequence
 from pet_upgrade_manager import PetUpgradeManager
-from poo import POO_TYPES
+from poo import get_poo_types
+import random
 from panel_stylesheets import panel, info_bar, bladder_bar, xp_bar, poop_btn, get_upgrade_btn, get_menu_btn, get_skill_btn
 
 class PetControlPanel(QWidget):
@@ -13,6 +14,7 @@ class PetControlPanel(QWidget):
         self.upgrades = PetUpgradeManager(self)
         self.pet.sprite_changed.connect(self.update_pet_frame)
         self.current_level = 0
+        self.POO_TYPES = get_poo_types()
 
         self.setWindowTitle("Control Panel")
         self.setFixedSize(1000, 460)
@@ -211,16 +213,21 @@ class PetControlPanel(QWidget):
         self.poop_bar.setValue(new_value)
 
     def increase_xp(self, amount):
-        current_xp = self.xp_bar.value()
-        total_xp = current_xp + amount
-        if total_xp > self.pet.max_xp:
-            overflow = total_xp - self.pet.max_xp
-            self.xp_bar.setValue(self.pet.max_xp)
-            self.pet.stored_overflow_xp += overflow
-            return 0
-        else:
-            self.xp_bar.setValue(total_xp)
-            return 0
+        while amount > 0:
+            current_xp = self.xp_bar.value()
+            max_xp = self.pet.max_xp
+            space_left = max_xp - current_xp
+
+            if amount >= space_left:
+                # Fill the bar to max and level up
+                self.xp_bar.setValue(max_xp)
+                amount -= space_left
+                self.upgrades.lvl_up()
+            else:
+                # Just add the remaining XP and exit
+                self.xp_bar.setValue(current_xp + amount)
+                amount = 0
+
 
     def set_max_xp(self, new_max):
         self.pet.max_xp = new_max
@@ -251,9 +258,11 @@ class PetControlPanel(QWidget):
             QTimer.singleShot(1500, self.reset_button_text)
             return
         if self.poop_button.isEnabled():
-            if self.poop_bar.value() >= POO_TYPES["normal"].bladder_value_decrese:
-                self.poop_bar.setValue(self.poop_bar.value() - POO_TYPES["normal"].bladder_value_decrese)
-                self.pet.poop()
+            poo_type = self.get_random_poo_type()
+            if self.poop_bar.value() >= poo_type.bladder_value_decrease:
+                self.poop_bar.setValue(int(self.poop_bar.value() - poo_type.bladder_value_decrease))
+                self.pet.poop(poo_type)  # Make sure `pet.poop()` accepts a PooType argument
+
                 self.lock_button(1000)
             else:
                 self.poop_button.setText("Too tired to poop")
@@ -345,5 +354,31 @@ class PetControlPanel(QWidget):
                 outer_layout.addWidget(add_extra_widget)
 
         parent_layout.addLayout(outer_layout)
+
+    def get_random_poo_type(self):
+        level = self.current_level  # Assume this is defined
+        # Only include types available at the current level
+        eligible_poo_types = {
+            key: poo for key, poo in self.POO_TYPES.items()
+            if level >= poo.min_level
+        }
+
+        adjusted_chances = {
+            key: poo.spawn_chance + (poo.growth_rate * level)
+            for key, poo in eligible_poo_types.items()
+        }
+
+        total = sum(adjusted_chances.values())
+        if total == 0:
+            return self.POO_TYPES["normal"]
+
+        r = random.uniform(0, total)
+        upto = 0
+        for key, chance in adjusted_chances.items():
+            if upto + chance >= r:
+                return self.POO_TYPES[key]
+            upto += chance
+
+        return self.POO_TYPES["normal"]
 
 

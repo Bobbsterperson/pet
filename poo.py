@@ -2,31 +2,55 @@ from PyQt5.QtWidgets import QLabel
 from PyQt5.QtCore import Qt, QTimer, QDateTime, QPoint
 import sip
 from dataclasses import dataclass
+from PyQt5.QtGui import QPixmap
 
 @dataclass
 class PooType:
     name: str
-    sprites: list
-    expiration_time: int
-    bladder_value_decrese: int
-    bladder_value_return: int
+    sprite_count: int
+    spawn_chance: float
+    bladder_value_decrease: float
+    bladder_value_return: float
     xp_value: int
     size: float
+    growth_rate: float
 
-POO_TYPES = {
-    "normal": PooType("normal", [], 60000, 30, 10, 120, 0.4),
-    "weak": PooType("weak", [], 20000, 30, 7, 5, 0.2),
-    "runny": PooType("runny", [], 30000, 40, 10, 15, 0.3),
-    "hard": PooType("hard", [], 80000, 20, 20, 15, 0.5),
-    "corny": PooType("corny", [], 60000, 40, 20, 20, 0.5),
-    "chilly": PooType("chilly", [], 20000, 50, 20, 30, 0.5),
-    "toxic": PooType("toxic", [], 60000, 60, 80, 120, 0.7),
-    "monster": PooType("monster", [], 60000, 30, 10, 120, 0.5),
-    "bloody": PooType("bloody", [], 60000, 30, 10, 120, 0.5),
-    "egg": PooType("egg", [], 60000, 30, 10, 120, 0.5),
-    "silver": PooType("silver", [], 70000, 20, 25, 20, 0.5),
-    "golden": PooType("golden", [], 80000, 20, -5, 2, 0.5),
-}
+    def __post_init__(self):
+        self.sprites = [QPixmap(f"poo/{self.name}_{i}.png") for i in range(self.sprite_count)]
+
+from dataclasses import dataclass
+from PyQt5.QtGui import QPixmap
+
+@dataclass
+class PooType:
+    name: str
+    size: float
+    sprites: list
+    spawn_chance: float
+    growth_rate: float
+    bladder_value_decrease: int
+    bladder_value_return: int
+    xp_value: int
+    min_level: int = 0
+
+def get_poo_types():
+    def load_sprites(name):
+        return [QPixmap(f"poo/{name}_0.png"), QPixmap(f"poo/{name}_1.png")]
+
+    return {
+        "normal": PooType("normal", 0.5, load_sprites("normal"), spawn_chance=1.0, growth_rate=0.0, bladder_value_decrease=20, bladder_value_return=10, xp_value=150, min_level=0),
+        "weak": PooType("weak", 0.7, load_sprites("weak"), spawn_chance=0.5, growth_rate=0.01, bladder_value_decrease=25, bladder_value_return=5, xp_value=3, min_level=1),
+        "runny": PooType("runny", 0.4, load_sprites("runny"), spawn_chance=0.3, growth_rate=0.015, bladder_value_decrease=35, bladder_value_return=7, xp_value=4, min_level=4),
+        "hard": PooType("hard", 1.0, load_sprites("hard"), spawn_chance=0.25, growth_rate=0.02, bladder_value_decrease=25, bladder_value_return=25, xp_value=6, min_level=7),
+        "corny": PooType("corny", 0.6, load_sprites("corny"), spawn_chance=0.2, growth_rate=0.015, bladder_value_decrease=35, bladder_value_return=15, xp_value=7, min_level=10),
+        "chilly": PooType("chilly", 0.5, load_sprites("chilly"), spawn_chance=0.15, growth_rate=0.015, bladder_value_decrease=40, bladder_value_return=20, xp_value=8, min_level=14),
+        "bloody": PooType("bloody", 0.7, load_sprites("bloody"), spawn_chance=0.12, growth_rate=0.015, bladder_value_decrease=30, bladder_value_return=15, xp_value=9, min_level=18),
+        "toxic": PooType("toxic", 1.2, load_sprites("toxic"), spawn_chance=0.1, growth_rate=0.02, bladder_value_decrease=60, bladder_value_return=80, xp_value=11, min_level=22),
+        "monster": PooType("monster", 1.5, load_sprites("monster"), spawn_chance=0.07, growth_rate=0.025, bladder_value_decrease=40, bladder_value_return=10, xp_value=13, min_level=30),
+        "egg": PooType("egg", 0.8, load_sprites("egg"), spawn_chance=0.06, growth_rate=0.02, bladder_value_decrease=30, bladder_value_return=10, xp_value=14, min_level=38),
+        "silver": PooType("silver", 1.1, load_sprites("silver"), spawn_chance=0.05, growth_rate=0.02, bladder_value_decrease=25, bladder_value_return=30, xp_value=16, min_level=48),
+        "gold": PooType("gold", 1.3, load_sprites("gold"), spawn_chance=0.03, growth_rate=0.015, bladder_value_decrease=20, bladder_value_return=-10, xp_value=20, min_level=60),
+    }
 
 class Poo:
     def __init__(self, parent, poo_type: PooType, x, y):
@@ -58,13 +82,9 @@ class Poo:
         self.idle_animation_timer = QTimer()
         self.idle_animation_timer.timeout.connect(self.update_idle_animation)
         self.idle_animation_timer.start(200)
-        self.update_stage_timer = QTimer()
-        self.update_stage_timer.timeout.connect(self.update_expiration_stage)
-        self.update_stage_timer.start(self.poo_type.expiration_time // 4)
         self.expiration_timer = QTimer()
         self.expiration_timer.setSingleShot(True)
         self.expiration_timer.timeout.connect(self.deleteLater)
-        self.expiration_timer.start(self.poo_type.expiration_time)
 
     def update_idle_animation(self):
         if not self.is_valid() or not self.sprites:
@@ -78,12 +98,6 @@ class Poo:
                 self.idle_animation_timer.stop()
             self.label.deleteLater()
             self.is_deleted = True
-
-
-    def update_expiration_stage(self):
-        if not self.is_valid():
-            return
-        self.label.setPixmap(self.sprites[self.current_stage])
 
     def is_valid(self):
         return self.label is not None and not sip.isdeleted(self.label) and not self.is_deleted

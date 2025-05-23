@@ -91,12 +91,6 @@ poop_btn = ("""
 def get_upgrade_btn(self):
     return [
             {
-                "icon_0": "assets/lvl_butt1.png",
-                "icon_1": "assets/lvl_butt0.png",
-                "text_func": lambda: f"Level up Button: extend XP bar, develop pet, extent poop variaty\nCurrent cost: {self.pet.max_xp}",
-                "callback":self.upgrades.lvl_up,
-            },
-            {
                 "icon_0": "assets/reg_butt0.png",
                 "icon_1": "assets/reg_butt1.png",
                 "text_func": lambda: f"Bladder auto refills \nCurrent cost: {self.pet.auto_poo_refill_upgrade_cost}",
@@ -170,12 +164,6 @@ def get_menu_btn(self):
                 "icon_1": "assets/minimize1.png",
                 "text_func": lambda: "minimise_panel",
                 "callback": self.minimise_panel
-            },
-            {
-                "icon_0": "assets/island0.png",
-                "icon_1": "assets/island1.png",
-                "text_func": lambda: "Island/fullscreen",
-                "callback": self.island
             },
             {
                 "icon_0": "assets/save_exit0.png",

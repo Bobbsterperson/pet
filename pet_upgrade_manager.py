@@ -1,21 +1,23 @@
 from dataclasses import replace
-from poo import POO_TYPES
+from poo import get_poo_types
 
 class PetUpgradeManager:
     def __init__(self, panel):
         self.panel = panel
+        self.POO_TYPES = get_poo_types()
 
     def lvl_up(self):
-        if self.panel.xp_bar.value() < self.panel.pet.max_xp:
-            self.panel.info_label.setText("XP not full! Cannot level up.")
-            return
+        self.panel.current_level += 1
+
         old_max = self.panel.pet.max_xp
         new_max = int(old_max * 1.45)
         self.panel.set_max_xp(new_max)
+        self.panel.xp_bar.setMaximum(new_max)
         self.panel.xp_bar.setValue(0)
-        self.panel.increase_xp(self.panel.pet.stored_overflow_xp)
-        self.panel.pet.stored_overflow_xp = 0
-        self.panel.info_label.setText(f"Level Up! Max XP increased to {self.panel.pet.max_xp}.")
+
+        self.panel.info_label.setText(f"🎉 Level Up! Now Level {self.panel.current_level}. New XP cap: {new_max}")
+
+
 
     def reg_button(self):
         xp = self.panel.xp_bar.value()
@@ -56,9 +58,9 @@ class PetUpgradeManager:
         cost = self.panel.pet.less_bladder_use_cost
         if xp >= cost:
             self.panel.xp_bar.setValue(xp - cost)
-            normal_poo = POO_TYPES["normal"]
-            new_val = max(normal_poo.bladder_value_decrese - 1, 0)
-            POO_TYPES["normal"] = replace(normal_poo, bladder_value_decrese=new_val)
+            normal_poo = self.POO_TYPES["normal"]
+            new_val = max(normal_poo.bladder_value_decrease - 1, 0)
+            self.POO_TYPES["normal"] = replace(normal_poo, bladder_value_decrease=new_val)
             self.panel.pet.less_bladder_use_cost *= 50
             self.panel.info_label.setText(f"Upgrade success! Next cost: {self.panel.pet.less_bladder_use_cost} XP")
         else:
@@ -69,9 +71,9 @@ class PetUpgradeManager:
         cost = self.panel.pet.poo_return_more_bladder_cost
         if xp >= cost:
             self.panel.xp_bar.setValue(xp - cost)
-            normal_poo = POO_TYPES["normal"]
+            normal_poo = self.POO_TYPES["normal"]
             new_return = normal_poo.bladder_value_return + 1
-            POO_TYPES["normal"] = replace(normal_poo, bladder_value_return=new_return)
+            self.POO_TYPES["normal"] = replace(normal_poo, bladder_value_return=new_return)
             self.panel.pet.poo_return_more_bladder_cost *= 50
             self.panel.info_label.setText(f"Upgrade success! Next cost: {self.panel.pet.poo_return_more_bladder_cost} XP")
         else:

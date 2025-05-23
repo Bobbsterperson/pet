@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt, QTimer, QDateTime, pyqtSignal
 from PyQt5.QtGui import QTransform
 from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget
 from control_panel import PetControlPanel
-from poo import Poo, POO_TYPES
+from poo import get_poo_types, Poo
 from PyQt5.QtGui import QPixmap
 from timers import setup_timers
 from sound import initialize_sounds
@@ -20,6 +20,7 @@ class Pet(QWidget):
         initialize_sounds(self)
         setup_timers(self)
         self.setup_position() 
+        self.POO_TYPES = get_poo_types()
 
     def setup_window(self):
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
@@ -181,45 +182,62 @@ class Pet(QWidget):
         random_interval = random.randint(3600, 10800)
         self.meh_timer.start(random_interval * 1000)
 
-    def poop(self):
+    def poop(self, poo_type):
         if self.gravity_timer.isActive() or self.is_pooping:
             return
+
         self.is_pooping = True
         self.is_walking = False
         self.frame = 0
         self.current_action = "poop"
+        self.current_poo_type = poo_type  # Save for use in animation
         self.animation_timer.stop()
+
         self.poop_animation_timer = QTimer(self)
         self.poop_animation_timer.timeout.connect(self.poop_animation)
         self.poop_animation_timer.start(self.animation_interval)
+
+
+
 
     def poop_animation(self):
         if self.frame >= 4:
             self.poop_animation_timer.stop()
             self.poop_animation_timer.deleteLater()
             del self.poop_animation_timer
-            self.spawn_poo()
+
+            self.spawn_poo(self.current_poo_type)  # Spawn actual poo
+
             self.is_pooping = False
             self.is_walking = True
             self.current_action = None
             self.animation_timer.start(self.animation_interval)
             self.frame = 0
             return
+
+        # Display pet's poop animation frame
         pix = self.sprites["poop"][self.frame % 4]
         if self.direction == "left":
             pix = pix.transformed(QTransform().scale(-1, 1))
         self.label.setPixmap(pix)
         self.frame += 1
 
-    def spawn_poo(self):
+    def spawn_poo(self, poo_type):
         self.poop_sound.play()
-        scale_factor = self.poo_type.size
-        sprite = self.poo_type.sprites[0]
-        x = max(0, min(self.x() + self.width() // 2 - int(sprite.width() * scale_factor) // 2,
-                    self.screen.width() - int(sprite.width() * scale_factor)))
+        
+        scale_factor = poo_type.size
+        sprite = poo_type.sprites[0]
+
+        # Calculate position to center poop under pet
+        x = max(0, min(
+            self.x() + self.width() // 2 - int(sprite.width() * scale_factor) // 2,
+            self.screen.width() - int(sprite.width() * scale_factor)
+        ))
         y = self.screen.height() - int(sprite.height() * scale_factor)
-        poo = Poo(self, self.poo_type, x, y)
+
+        poo = Poo(self, poo_type, x, y)
         self.spawned_poo.append(poo)
+
 
     def cleanup_poop(self):
         now = QDateTime.currentMSecsSinceEpoch()
@@ -281,11 +299,15 @@ class Pet(QWidget):
             if poo and poo in self.spawned_poo:
                 poo.deleteLater()
                 self.spawned_poo.remove(poo)
-                self.control_panel.refill_poop_bar(POO_TYPES["normal"].bladder_value_return)
-                self.control_panel.increase_xp(POO_TYPES["normal"].xp_value)
+                self.control_panel.refill_poop_bar(self.POO_TYPES["normal"].bladder_value_return)
+                self.control_panel.increase_xp(self.POO_TYPES["normal"].xp_value)
             return
         self.label.setPixmap(eat_frames[self.frame])
         self.frame += 1
+
+
+
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
