@@ -16,7 +16,7 @@ def initialize_settings(self):
     self.bladder_refil_timer = 10000
     self.poo_units_refil_time_value = 0
 
-    self.auto_poop_interval = 35000
+    self.auto_poop_interval = 3500
 
     self.max_xp = 100
     self.auto_poo_refill_upgrade_cost = 50

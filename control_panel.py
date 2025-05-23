@@ -217,14 +217,11 @@ class PetControlPanel(QWidget):
             current_xp = self.xp_bar.value()
             max_xp = self.pet.max_xp
             space_left = max_xp - current_xp
-
             if amount >= space_left:
-                # Fill the bar to max and level up
                 self.xp_bar.setValue(max_xp)
                 amount -= space_left
                 self.upgrades.lvl_up()
             else:
-                # Just add the remaining XP and exit
                 self.xp_bar.setValue(current_xp + amount)
                 amount = 0
 

@@ -198,7 +198,9 @@ class Pet(QWidget):
         self.poop_animation_timer.start(self.animation_interval)
 
 
-
+    def auto_poop_action(self):
+        poo_type = self.control_panel.get_random_poo_type()
+        self.control_panel.try_to_poop()
 
     def poop_animation(self):
         if self.frame >= 4:

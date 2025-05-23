@@ -39,5 +39,5 @@ def setup_timers(self):
     self.poop_cleanup_timer.start(1000)
 
     self.poop_auto_timer = QTimer(self)
-    self.poop_auto_timer.timeout.connect(self.poop)
+    self.poop_auto_timer.timeout.connect(self.auto_poop_action)
     
