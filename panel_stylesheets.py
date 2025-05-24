@@ -194,99 +194,99 @@ def get_skill_btn(self):
 def get_achievement_btn(self):
     return [
             {
-                "icon_0": "pet/walk00.png",
-                "icon_1": "pet/idle00.png",
+                "icon_0": "assets/pet/walk00.png",
+                "icon_1": "assets/pet/idle00.png",
                 "text_func": lambda: "you unlocked weak poop",
                 "callback": self.weak_achievement,
                 # "enabled": False
             },
             {
-                "icon_0": "pet/walk10.png",
-                "icon_1": "pet/idle10.png",
+                "icon_0": "assets/pet/walk10.png",
+                "icon_1": "assets/pet/idle10.png",
                 "text_func": lambda: "you unlocked weak poop",
                 "callback": self.weak_achievement,
                 # "enabled": False
             },
             {
-                "icon_0": "poo/weak_0.png",
-                "icon_1": "poo/weak_1.png",
+                "icon_0": "assets/poo/weak_0.png",
+                "icon_1": "assets/poo/weak_1.png",
                 "text_func": lambda: "you unlocked weak poop",
                 "callback": self.weak_achievement,
                 # "enabled": False
             },
             {
-                "icon_0": "poo/normal_0.png",
-                "icon_1": "poo/normal_1.png",
+                "icon_0": "assets/poo/normal_0.png",
+                "icon_1": "assets/poo/normal_1.png",
                 "text_func": lambda: "you unlocked weak poop",
                 "callback": self.weak_achievement,
                 # "enabled": False
             },
             {
-                "icon_0": "poo/bloody_0.png",
-                "icon_1": "poo/bloody_1.png",
+                "icon_0": "assets/poo/bloody_0.png",
+                "icon_1": "assets/poo/bloody_1.png",
                 "text_func": lambda: "you unlocked weak poop",
                 "callback": self.weak_achievement,
                 # "enabled": False
             },
             {
-                "icon_0": "poo/chilly_0.png",
-                "icon_1": "poo/chilly_1.png",
+                "icon_0": "assets/poo/chilly_0.png",
+                "icon_1": "assets/poo/chilly_1.png",
                 "text_func": lambda: "you unlocked weak poop",
                 "callback": self.weak_achievement,
                 # "enabled": False
             },
             {
-                "icon_0": "poo/corny_0.png",
-                "icon_1": "poo/corny_1.png",
+                "icon_0": "assets/poo/corny_0.png",
+                "icon_1": "assets/poo/corny_1.png",
                 "text_func": lambda: "you unlocked weak poop",
                 "callback": self.weak_achievement,
                 # "enabled": False
             },
             {
-                "icon_0": "poo/egg_0.png",
-                "icon_1": "poo/egg_1.png",
+                "icon_0": "assets/poo/egg_0.png",
+                "icon_1": "assets/poo/egg_1.png",
                 "text_func": lambda: "you unlocked weak poop",
                 "callback": self.weak_achievement,
                 # "enabled": False
             },
             {
-                "icon_0": "poo/gold_0.png",
-                "icon_1": "poo/gold_1.png",
+                "icon_0": "assets/poo/gold_0.png",
+                "icon_1": "assets/poo/gold_1.png",
                 "text_func": lambda: "you unlocked weak poop",
                 "callback": self.weak_achievement,
                 # "enabled": False
             },
             {
-                "icon_0": "poo/hard_0.png",
-                "icon_1": "poo/hard_1.png",
+                "icon_0": "assets/poo/hard_0.png",
+                "icon_1": "assets/poo/hard_1.png",
                 "text_func": lambda: "you unlocked weak poop",
                 "callback": self.weak_achievement,
                 # "enabled": False
             },
             {
-                "icon_0": "poo/monster_0.png",
-                "icon_1": "poo/monster_1.png",
+                "icon_0": "assets/poo/monster_0.png",
+                "icon_1": "assets/poo/monster_1.png",
                 "text_func": lambda: "you unlocked weak poop",
                 "callback": self.weak_achievement,
                 # "enabled": False
             },
             {
-                "icon_0": "poo/silver_0.png",
-                "icon_1": "poo/silver_1.png",
+                "icon_0": "assets/poo/silver_0.png",
+                "icon_1": "assets/poo/silver_1.png",
                 "text_func": lambda: "you unlocked weak poop",
                 "callback": self.weak_achievement,
                 # "enabled": False
             },
             {
-                "icon_0": "poo/toxic_0.png",
-                "icon_1": "poo/toxic_1.png",
+                "icon_0": "assets/poo/toxic_0.png",
+                "icon_1": "assets/poo/toxic_1.png",
                 "text_func": lambda: "you unlocked weak poop",
                 "callback": self.weak_achievement,
                 # "enabled": False
             },
             {
-                "icon_0": "poo/runny_0.png",
-                "icon_1": "poo/runny_1.png",
+                "icon_0": "assets/poo/runny_0.png",
+                "icon_1": "assets/poo/runny_1.png",
                 "text_func": lambda: "you unlocked weak poop",
                 "callback": self.weak_achievement,
                 # "enabled": False

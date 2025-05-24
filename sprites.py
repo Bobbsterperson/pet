@@ -15,7 +15,7 @@ def initialize_sprites(self):
     actions = ["walk", "idle", "shiv", "poop", "eat"]
     for action in actions:
         self.sprites[action] = [
-            QPixmap(f"pet/{action}{self.sprite_variant}{i}.png") for i in range(4)
+            QPixmap(f"assets/pet/{action}{self.sprite_variant}{i}.png") for i in range(4)
         ]
 
     self.label.setPixmap(self.sprites["idle"][0])
@@ -23,7 +23,7 @@ def initialize_sprites(self):
     self.resize(self.label.size())                  # <-- And this, to fit the label
 
     for name, poo_type in POO_TYPES.items():
-        poo_type.sprites = [QPixmap(f"poo/{name}_{i}.png") for i in range(4)]
+        poo_type.sprites = [QPixmap(f"assets/poo/{name}_{i}.png") for i in range(4)]
 
     self.poo_type = POO_TYPES["normal"]
 

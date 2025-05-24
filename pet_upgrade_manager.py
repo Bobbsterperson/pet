@@ -8,7 +8,6 @@ class PetUpgradeManager:
 
     def lvl_up(self):
         self.panel.current_level += 1
-
         old_max = self.panel.pet.max_xp
         new_max = int(old_max * 1.45)
         self.panel.set_max_xp(new_max)

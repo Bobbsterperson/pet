@@ -35,7 +35,7 @@ class PooType:
 
 def get_poo_types():
     def load_sprites(name, count=4):
-        return [QPixmap(f"poo/{name}_{i}.png") for i in range(count)]
+        return [QPixmap(f"assets/poo/{name}_{i}.png") for i in range(count)]
     return {
         "normal": PooType("normal", 0.5, load_sprites("normal"), spawn_chance=1.0, growth_rate=0.0, bladder_value_decrease=20, bladder_value_return=20, xp_value=250, min_level=0),
         "weak": PooType("weak", 0.7, load_sprites("weak"), spawn_chance=0.5, growth_rate=0.01, bladder_value_decrease=25, bladder_value_return=25, xp_value=250, min_level=1),

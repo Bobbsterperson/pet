@@ -28,9 +28,7 @@ class InfoIconButton(QPushButton):
         new_icon = self.icon_path_1 if self.icon_state else self.icon_path_0
         self.setIcon(QIcon(new_icon))
 
-    # Optional: You can keep hover effects or disable them now
     def enterEvent(self, event):
-        # Optionally stop timer or change style on hover
         self.setStyleSheet(self.hover_style())
         self.hovered.emit(self.hover_text)
         super().enterEvent(event)
