@@ -5,7 +5,7 @@ from PyQt5.QtGui import QKeySequence, QPixmap
 from pet_upgrade_manager import PetUpgradeManager
 from poo import get_poo_types
 import random
-from panel_stylesheets import panel, info_bar, bladder_bar, xp_bar, poop_btn, get_upgrade_btn, get_menu_btn, get_skill_btn
+from panel_stylesheets import panel, info_bar, bladder_bar, xp_bar, poop_btn, get_upgrade_btn, get_menu_btn, get_skill_btn, get_achievement_btn
 
 class PetControlPanel(QWidget):
     def __init__(self, pet):
@@ -67,8 +67,18 @@ class PetControlPanel(QWidget):
         skills_layout.setSpacing(10)
         self.add_skill_buttons(skills_layout)
         layout.addWidget(self.skills_widget)
+
+        self.achievements_widget = QWidget()
+        achievements_layout = QHBoxLayout(self.achievements_widget)
+        achievements_layout.setContentsMargins(0, 0, 0, 0)
+        achievements_layout.setSpacing(10)
+        self.add_achievements_buttons(achievements_layout)
+        layout.addWidget(self.achievements_widget)
+
+        self.achievements_widget.setVisible(False) # to hide it on start
         self.skills_widget.setVisible(False) # to hide it on start
         self.upgrades_widget.setVisible(False)
+
         # Poop button
         self.poop_button = self.create_poop_button()
         layout.addWidget(self.poop_button)
@@ -116,6 +126,10 @@ class PetControlPanel(QWidget):
 
     def add_skill_buttons(self, parent_layout):
         buttons_info = get_skill_btn(self)
+        self.add_buttons(parent_layout, buttons_info)
+
+    def add_achievements_buttons(self, parent_layout):
+        buttons_info = get_achievement_btn(self)
         self.add_buttons(parent_layout, buttons_info)
 
     def add_menu_buttons(self, parent_layout):
@@ -167,8 +181,11 @@ class PetControlPanel(QWidget):
     def double_poop_production(self):
         pass
 
-    def hide_achivements(self):
-        pass
+    def hide_achievements(self):
+        if hasattr(self, "achievements_widget"):
+            is_visible = self.achievements_widget.isVisible()
+            self.achievements_widget.setVisible(not is_visible)
+            self.update_panel_size()
     
     def hide_skills(self):
         if hasattr(self, "skills_widget"):
@@ -233,7 +250,6 @@ class PetControlPanel(QWidget):
             else:
                 self.xp_bar.setValue(current_xp + amount)
                 amount = 0
-
 
     def set_max_xp(self, new_max):
         self.pet.max_xp = new_max
@@ -310,6 +326,7 @@ class PetControlPanel(QWidget):
             self.info_label,
             self.upgrades_widget if hasattr(self, 'upgrades_widget') else None,
             self.skills_widget if hasattr(self, 'skills_widget') else None,
+            self.achievements_widget if hasattr(self, 'achievements_widget') else None,
             self.poop_button
         ]
         first_visible_found = False
@@ -320,7 +337,7 @@ class PetControlPanel(QWidget):
 
         # Enforce minimum/maximum height limits if necessary
         min_height = 200
-        max_height = 1000
+        max_height = 1200
         final_height = max(min_height, min(total_height, max_height))
         self.setFixedSize(base_width, final_height)
 
@@ -401,4 +418,7 @@ class PetControlPanel(QWidget):
 
         return self.POO_TYPES["normal"]
 
-
+    def weak_achievement(self):
+        if not hasattr(self, "achievements_widget"):
+            return
+        self.update_info("Weak achievement unlocked! Keep going!")

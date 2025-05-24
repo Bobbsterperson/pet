@@ -99,10 +99,6 @@ class PetUpgradeManager:
         else:
             self.panel.info_label.setText(f"Need {cost} XP! You have {xp}.")
 
-
-
-
-
     def auto_poop(self):
         xp = self.panel.xp_bar.value()
         cost = self.panel.pet.auto_poop_cost
