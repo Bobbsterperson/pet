@@ -34,22 +34,21 @@ class PooType:
     min_level: int = 0
 
 def get_poo_types():
-    def load_sprites(name):
-        return [QPixmap(f"poo/{name}_0.png"), QPixmap(f"poo/{name}_1.png")]
-
+    def load_sprites(name, count=4):
+        return [QPixmap(f"poo/{name}_{i}.png") for i in range(count)]
     return {
-        "normal": PooType("normal", 0.5, load_sprites("normal"), spawn_chance=1.0, growth_rate=0.0, bladder_value_decrease=20, bladder_value_return=10, xp_value=150, min_level=0),
-        "weak": PooType("weak", 0.7, load_sprites("weak"), spawn_chance=0.5, growth_rate=0.01, bladder_value_decrease=25, bladder_value_return=5, xp_value=3, min_level=1),
-        "runny": PooType("runny", 0.4, load_sprites("runny"), spawn_chance=0.3, growth_rate=0.015, bladder_value_decrease=35, bladder_value_return=7, xp_value=4, min_level=4),
-        "hard": PooType("hard", 1.0, load_sprites("hard"), spawn_chance=0.25, growth_rate=0.02, bladder_value_decrease=25, bladder_value_return=25, xp_value=6, min_level=7),
-        "corny": PooType("corny", 0.6, load_sprites("corny"), spawn_chance=0.2, growth_rate=0.015, bladder_value_decrease=35, bladder_value_return=15, xp_value=7, min_level=10),
-        "chilly": PooType("chilly", 0.5, load_sprites("chilly"), spawn_chance=0.15, growth_rate=0.015, bladder_value_decrease=40, bladder_value_return=20, xp_value=8, min_level=14),
-        "bloody": PooType("bloody", 0.7, load_sprites("bloody"), spawn_chance=0.12, growth_rate=0.015, bladder_value_decrease=30, bladder_value_return=15, xp_value=9, min_level=18),
-        "toxic": PooType("toxic", 1.2, load_sprites("toxic"), spawn_chance=0.1, growth_rate=0.02, bladder_value_decrease=60, bladder_value_return=80, xp_value=11, min_level=22),
-        "monster": PooType("monster", 1.5, load_sprites("monster"), spawn_chance=0.07, growth_rate=0.025, bladder_value_decrease=40, bladder_value_return=10, xp_value=13, min_level=30),
-        "egg": PooType("egg", 0.8, load_sprites("egg"), spawn_chance=0.06, growth_rate=0.02, bladder_value_decrease=30, bladder_value_return=10, xp_value=14, min_level=38),
-        "silver": PooType("silver", 1.1, load_sprites("silver"), spawn_chance=0.05, growth_rate=0.02, bladder_value_decrease=25, bladder_value_return=30, xp_value=16, min_level=48),
-        "gold": PooType("gold", 1.3, load_sprites("gold"), spawn_chance=0.03, growth_rate=0.015, bladder_value_decrease=20, bladder_value_return=-10, xp_value=20, min_level=60),
+        "normal": PooType("normal", 0.5, load_sprites("normal"), spawn_chance=1.0, growth_rate=0.0, bladder_value_decrease=20, bladder_value_return=20, xp_value=250, min_level=0),
+        "weak": PooType("weak", 0.7, load_sprites("weak"), spawn_chance=0.5, growth_rate=0.01, bladder_value_decrease=25, bladder_value_return=25, xp_value=250, min_level=1),
+        "runny": PooType("runny", 0.4, load_sprites("runny"), spawn_chance=0.3, growth_rate=0.015, bladder_value_decrease=35, bladder_value_return=7, xp_value=250, min_level=2),
+        "hard": PooType("hard", 1.0, load_sprites("hard"), spawn_chance=0.25, growth_rate=0.02, bladder_value_decrease=25, bladder_value_return=25, xp_value=250, min_level=3),
+        "corny": PooType("corny", 0.6, load_sprites("corny"), spawn_chance=0.2, growth_rate=0.015, bladder_value_decrease=35, bladder_value_return=35, xp_value=250, min_level=4),
+        "chilly": PooType("chilly", 0.5, load_sprites("chilly"), spawn_chance=0.15, growth_rate=0.015, bladder_value_decrease=40, bladder_value_return=40, xp_value=250, min_level=5),
+        "bloody": PooType("bloody", 0.7, load_sprites("bloody"), spawn_chance=0.12, growth_rate=0.015, bladder_value_decrease=30, bladder_value_return=30, xp_value=250, min_level=6),
+        "toxic": PooType("toxic", 1.2, load_sprites("toxic"), spawn_chance=0.1, growth_rate=0.02, bladder_value_decrease=60, bladder_value_return=80, xp_value=250, min_level=7),
+        "monster": PooType("monster", 1.5, load_sprites("monster"), spawn_chance=0.07, growth_rate=0.025, bladder_value_decrease=40, bladder_value_return=10, xp_value=250, min_level=8),
+        "egg": PooType("egg", 0.8, load_sprites("egg"), spawn_chance=0.06, growth_rate=0.02, bladder_value_decrease=30, bladder_value_return=10, xp_value=14, min_level=250),
+        "silver": PooType("silver", 1.1, load_sprites("silver"), spawn_chance=0.05, growth_rate=0.02, bladder_value_decrease=25, bladder_value_return=30, xp_value=250, min_level=10),
+        "gold": PooType("gold", 1.3, load_sprites("gold"), spawn_chance=0.03, growth_rate=0.015, bladder_value_decrease=20, bladder_value_return=-10, xp_value=250, min_level=11),
     }
 
 class Poo:

@@ -14,10 +14,7 @@ class PetUpgradeManager:
         self.panel.set_max_xp(new_max)
         self.panel.xp_bar.setMaximum(new_max)
         self.panel.xp_bar.setValue(0)
-
         self.panel.info_label.setText(f"🎉 Level Up! Now Level {self.panel.current_level}. New XP cap: {new_max}")
-
-
 
     def reg_button(self):
         xp = self.panel.xp_bar.value()
@@ -58,13 +55,15 @@ class PetUpgradeManager:
         cost = self.panel.pet.less_bladder_use_cost
         if xp >= cost:
             self.panel.xp_bar.setValue(xp - cost)
-            normal_poo = self.POO_TYPES["normal"]
-            new_val = max(normal_poo.bladder_value_decrease - 1, 0)
-            self.POO_TYPES["normal"] = replace(normal_poo, bladder_value_decrease=new_val)
-            self.panel.pet.less_bladder_use_cost *= 50
+            normal_poo = self.panel.pet.POO_TYPES["normal"]
+            for poo in self.panel.pet.spawned_poo:
+                if poo.poo_type.name == "normal":
+                    poo.poo_type.bladder_value_decrease = normal_poo.bladder_value_decrease
+            self.panel.pet.less_bladder_use_cost += 50
             self.panel.info_label.setText(f"Upgrade success! Next cost: {self.panel.pet.less_bladder_use_cost} XP")
         else:
             self.panel.info_label.setText(f"Need {cost} XP! You have {xp}.")
+
 
     def poo_return_more_bladder(self):
         xp = self.panel.xp_bar.value()
@@ -75,9 +74,19 @@ class PetUpgradeManager:
             new_return = normal_poo.bladder_value_return + 1
             self.POO_TYPES["normal"] = replace(normal_poo, bladder_value_return=new_return)
             self.panel.pet.poo_return_more_bladder_cost *= 50
+            
+            # Update all existing "normal" poos with new PooType
+            for poo in self.panel.pet.spawned_poo:
+                if poo.poo_type.name == "normal":
+                    poo.poo_type = self.POO_TYPES["normal"]
+            
             self.panel.info_label.setText(f"Upgrade success! Next cost: {self.panel.pet.poo_return_more_bladder_cost} XP")
         else:
             self.panel.info_label.setText(f"Need {cost} XP! You have {xp}.")
+
+
+
+
 
     def auto_poop(self):
         xp = self.panel.xp_bar.value()

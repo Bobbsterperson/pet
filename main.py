@@ -22,6 +22,7 @@ class Pet(QWidget):
         setup_timers(self)
         self.setup_position() 
         self.POO_TYPES = get_poo_types()
+        # self.spawned_poo = [] # possibly for deletion
         
 
     def setup_window(self):
@@ -59,19 +60,22 @@ class Pet(QWidget):
     def move_pet(self):
         if self.old_pos is not None or self.gravity_timer.isActive():
             return
-        if self.target_poo and not self.target_poo.is_deleted and self.target_poo.label is not None:
-            pet_center = self.x() + self.width() // 2
-            poo_center = self.target_poo.label.x() + self.target_poo.label.width() // 2
-            if abs(pet_center - poo_center) <= 5:
-                self.handle_eat_animation(self.target_poo)
+        if self.target_poo:
+            if self.target_poo.is_deleted or not self.target_poo.label:
                 self.target_poo = None
             else:
-                self.direction = "right" if pet_center < poo_center else "left"
-                dx = self.approach_speed if self.direction == "right" else -self.approach_speed
-                new_x = self.x() + dx
-                new_x = max(0, min(self.screen.width() - self.width(), new_x))
-                self.move(new_x, self.y())
-            return
+                pet_center = self.x() + self.width() // 2
+                poo_center = self.target_poo.label.x() + self.target_poo.label.width() // 2
+                if abs(pet_center - poo_center) <= 5:
+                    self.handle_eat_animation(self.target_poo)
+                    self.target_poo = None
+                else:
+                    self.direction = "right" if pet_center < poo_center else "left"
+                    dx = self.approach_speed if self.direction == "right" else -self.approach_speed
+                    new_x = self.x() + dx
+                    new_x = max(0, min(self.screen.width() - self.width(), new_x))
+                    self.move(new_x, self.y())
+                return
         if not self.is_walking:
             return
 
@@ -185,9 +189,8 @@ class Pet(QWidget):
         self.meh_timer.start(random_interval * 1000)
 
     def poop(self, poo_type):
-        if self.gravity_timer.isActive() or self.is_pooping:
+        if self.gravity_timer.isActive() or self.is_pooping or self.is_eating:
             return
-
         self.is_pooping = True
         self.is_walking = False
         self.frame = 0
@@ -199,10 +202,9 @@ class Pet(QWidget):
         self.poop_animation_timer.timeout.connect(self.poop_animation)
         self.poop_animation_timer.start(self.animation_interval)
 
-
     def auto_poop_action(self):
         poo_type = self.control_panel.get_random_poo_type()
-        self.control_panel.try_to_poop()
+        self.control_panel.try_to_poop(poo_type)
 
     def poop_animation(self):
         if self.frame >= 4:
@@ -270,7 +272,7 @@ class Pet(QWidget):
         return current_pooping + refill_amount <= 100
 
     def initiate_poo_consumption(self, poo):
-        if self.target_poo is None:
+        if self.target_poo is None or self.target_poo.is_deleted or not self.target_poo.label:
             self.target_poo = poo
             self.is_walking = False
             self.animation_timer.start(self.animation_interval)
@@ -290,7 +292,9 @@ class Pet(QWidget):
         self.eat_animation_timer.start(self.animation_interval)
 
     def eat_animation(self, poo):
-        eat_frames = self.sprites["eat"]
+        if self.gravity_timer.isActive() or self.is_pooping:
+            return
+        eat_frames = self.sprites["eat"]     
         if self.frame >= len(eat_frames):
             self.eat_animation_timer.stop()
             self.eat_animation_timer = None
@@ -301,10 +305,13 @@ class Pet(QWidget):
             self.is_walking = True
             self.animation_timer.start(self.animation_interval)
             if poo and poo in self.spawned_poo:
-                poo.deleteLater()
+                bladder_value, xp = poo.consume()
                 self.spawned_poo.remove(poo)
-                self.control_panel.refill_poop_bar(self.POO_TYPES["normal"].bladder_value_return)
-                self.control_panel.increase_xp(self.POO_TYPES["normal"].xp_value)
+                self.control_panel.refill_poop_bar(bladder_value)
+                self.control_panel.increase_xp(xp)
+            # Clear the target poo after it's been consumed
+            if poo == self.target_poo:
+                self.target_poo = None
             return
         self.label.setPixmap(eat_frames[self.frame])
         self.frame += 1
@@ -322,9 +329,6 @@ class Pet(QWidget):
         self.label.resize(self.label.pixmap().size())  # resize again here
         self.resize(self.label.size())
         self.label.update()
-
-
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

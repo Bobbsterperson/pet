@@ -257,7 +257,7 @@ class PetControlPanel(QWidget):
         self.poop_button.setEnabled(False)
         QTimer.singleShot(duration_ms, lambda: self.poop_button.setEnabled(True))
 
-    def try_to_poop(self):
+    def try_to_poop(self, poo_type=None):
         if self.pet.gravity_timer.isActive() or self.pet.is_dragging:
             self.poop_button.setText("Can't poop in air")
             self.poop_button.setEnabled(False)
