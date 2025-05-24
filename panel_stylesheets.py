@@ -31,12 +31,12 @@ panel =("""
     """)
 info_bar = ("""
             QLabel {
-                font-size: 24px;
+                font-size: 24px;  /* Slightly smaller if you expect lots of lines */
                 color: #ffffff;
                 background-color: rgba(0, 0, 0, 0.5);
                 border: 2px dashed #ff66cc;
                 border-radius: 8px;
-                padding: 4px;
+                padding: 6px;
             }
         """)
 bladder_bar = ("""
@@ -288,7 +288,7 @@ def get_achievement_btn(self):
                 "icon_0": "assets/poo/runny_0.png",
                 "icon_1": "assets/poo/runny_1.png",
                 "text_func": lambda: "you unlocked weak poop",
-                "callback": self.weak_achievement,
+                "callback": self.runny_stats,
                 # "enabled": False
             },
         ]

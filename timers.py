@@ -30,10 +30,6 @@ def setup_timers(self):
     self.pickup_cooldown_timer.setSingleShot(True)
     self.pickup_cooldown_timer.timeout.connect(self.enable_pickup)
 
-    self.meh_timer = QTimer(self)
-    self.meh_timer.timeout.connect(self.play_meh_sound)
-    self.set_random_meh_timer()
-
     self.poop_cleanup_timer = QTimer(self)
     self.poop_cleanup_timer.timeout.connect(self.cleanup_poop)
     self.poop_cleanup_timer.start(1000)

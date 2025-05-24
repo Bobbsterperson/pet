@@ -1,11 +1,12 @@
-from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QProgressBar, QLabel, QHBoxLayout, QGridLayout, QShortcut, QApplication, QLayout
+from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QGridLayout, QShortcut, QApplication, QVBoxLayout
 from PyQt5.QtCore import Qt, QTimer
 from info_icon_button import InfoIconButton
-from PyQt5.QtGui import QKeySequence, QPixmap
+from PyQt5.QtGui import QKeySequence
+from PyQt5.QtWidgets import QSizePolicy
 from pet_upgrade_manager import PetUpgradeManager
 from poo import get_poo_types
 import random
-from panel_stylesheets import panel, info_bar, get_upgrade_btn, get_menu_btn, get_skill_btn, get_achievement_btn
+from panel_stylesheets import panel, info_bar
 from bars import create_bladder_bar, create_xp_bar, create_poop_button
 from button_manager import (
     add_menu_buttons,
@@ -13,9 +14,6 @@ from button_manager import (
     add_skill_buttons,
     add_achievements_buttons,
 )
-
-
-
 class PetControlPanel(QWidget):
     def __init__(self, pet):
         super().__init__()
@@ -38,7 +36,7 @@ class PetControlPanel(QWidget):
         layout = QVBoxLayout()
         layout.setSpacing(20)
 
-        # Create menu buttons container widget and layout
+        # Top menu buttons
         self.menu_buttons_widget = QWidget()
         menu_layout = QHBoxLayout(self.menu_buttons_widget)
         menu_layout.setContentsMargins(0, 0, 0, 0)
@@ -46,7 +44,7 @@ class PetControlPanel(QWidget):
         add_menu_buttons(self, menu_layout)
         layout.addWidget(self.menu_buttons_widget)
 
-        # Group bars and info into a container for easy toggling
+        # Bars container (poop + xp)
         self.bars_container = QVBoxLayout()
 
         self.poop_bar = create_bladder_bar(self.pet)
@@ -55,42 +53,51 @@ class PetControlPanel(QWidget):
         self.xp_bar = create_xp_bar(self.current_level, self.pet.max_xp)
         self.bars_container.addWidget(self.xp_bar)
 
-        self.info_label = QLabel("")
-        self.info_label.setFixedHeight(self.pet.text_bar_size)
-        self.info_label.setAlignment(Qt.AlignCenter)
-        self.info_label.setStyleSheet(info_bar)
-        self.bars_container.addWidget(self.info_label)
         layout.addLayout(self.bars_container)
 
-        # Create upgrades container widget and layout
+        # Skills, Upgrades, Achievements go here (initially hidden)
+        self.dynamic_widgets_container = QVBoxLayout()
+
         self.upgrades_widget = QWidget()
         upgrades_layout = QHBoxLayout(self.upgrades_widget)
         upgrades_layout.setContentsMargins(0, 0, 0, 0)
         upgrades_layout.setSpacing(10)
         add_upgrade_buttons(self, upgrades_layout)
-        layout.addWidget(self.upgrades_widget)
+        self.dynamic_widgets_container.addWidget(self.upgrades_widget)
 
         self.skills_widget = QWidget()
         skills_layout = QHBoxLayout(self.skills_widget)
         skills_layout.setContentsMargins(0, 0, 0, 0)
         skills_layout.setSpacing(10)
         add_skill_buttons(self, skills_layout)
-        layout.addWidget(self.skills_widget)
+        self.dynamic_widgets_container.addWidget(self.skills_widget)
 
         self.achievements_widget = QWidget()
         achievements_layout = QHBoxLayout(self.achievements_widget)
         achievements_layout.setContentsMargins(0, 0, 0, 0)
         achievements_layout.setSpacing(10)
         add_achievements_buttons(self, achievements_layout)
-        layout.addWidget(self.achievements_widget)
+        self.dynamic_widgets_container.addWidget(self.achievements_widget)
 
-        self.achievements_widget.setVisible(False) # to hide it on start
-        self.skills_widget.setVisible(False) # to hide it on start
         self.upgrades_widget.setVisible(False)
+        self.skills_widget.setVisible(False)
+        self.achievements_widget.setVisible(False)
+
+        layout.addLayout(self.dynamic_widgets_container)
+
+        # Info label - move to just above poop button
+        self.info_label = QLabel("")
+        self.info_label.setWordWrap(True)
+        self.info_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.info_label.setStyleSheet(info_bar)
+        self.info_label.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
+        self.info_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        layout.addWidget(self.info_label)
 
         # Poop button
         self.poop_button = create_poop_button(self.try_to_poop)
         layout.addWidget(self.poop_button)
+
 
         # Final layout setup
         self.setLayout(layout)
@@ -146,6 +153,9 @@ class PetControlPanel(QWidget):
 
     def update_info(self, text):
         self.info_label.setText(text)
+        self.info_label.adjustSize()
+        self.update_panel_size()
+
 
     def clear_info(self):
         self.info_label.setText("")
@@ -323,7 +333,7 @@ class PetControlPanel(QWidget):
         }
 
         adjusted_chances = {
-            key: poo.spawn_chance + (poo.growth_rate * level)
+            key: poo.spawn_chance + (poo.spawn_chance_grow_per_level * level)
             for key, poo in eligible_poo_types.items()
         }
 
@@ -339,8 +349,19 @@ class PetControlPanel(QWidget):
             upto += chance
 
         return self.POO_TYPES["normal"]
-
+    
     def weak_achievement(self):
+        pass
+
+    def runny_stats(self):
         if not hasattr(self, "achievements_widget"):
             return
-        self.update_info("Weak achievement unlocked! Keep going!")
+        poo_types = get_poo_types()
+        runny_poo = poo_types["runny"]
+        stats = (
+            f"Name: {runny_poo.name}                                          Size: {runny_poo.size}\n"
+            f"Spawn Chance: {runny_poo.spawn_chance}                Growth Rate: {runny_poo.spawn_chance_grow_per_level}\n"
+            f"Bladder Decrease: {runny_poo.bladder_value_decrease}              Bladder Return: {runny_poo.bladder_value_return}\n"
+            f"XP Value: {runny_poo.xp_value}                           Minimum Level: {runny_poo.min_level}"
+        )
+        self.update_info(stats)

@@ -181,11 +181,6 @@ class Pet(QWidget):
     def play_meh_sound(self):
         self.meh_sound.setVolume(1.0)
         self.meh_sound.play()
-        self.set_random_meh_timer()
-
-    def set_random_meh_timer(self):
-        random_interval = random.randint(3600, 10800)
-        self.meh_timer.start(random_interval * 1000)
 
     def poop(self, poo_type):
         if self.gravity_timer.isActive() or self.is_pooping or self.is_eating:
