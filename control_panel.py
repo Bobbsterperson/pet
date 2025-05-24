@@ -338,29 +338,42 @@ class PetControlPanel(QWidget):
         outer_layout = QHBoxLayout()
         outer_layout.addStretch()
         grid_layout = QGridLayout()
+
+        # Store buttons for later updates
+        self.upgrade_buttons = []
+
         for index, info in enumerate(buttons_info):
             initial_text = info.get("text", "")
             button = InfoIconButton(info["icon_0"], info["icon_1"], initial_text)
             text_func = info.get("text_func")
+
             if text_func:
                 button.hovered.connect(lambda _, f=text_func: self.update_info(f()))
             else:
                 button.hovered.connect(lambda _, t=initial_text: self.update_info(t))
+
             button.unhovered.connect(self.clear_info)
             button.clicked.connect(info["callback"])
+
+            # Store button and its update function for later
+            self.upgrade_buttons.append((button, text_func))
+
             row = index // 10
             col = index % 10
             grid_layout.addWidget(button, row, col)
+
         outer_layout.addLayout(grid_layout)
 
-        # Optional extra widget or layout to add to the outer layout
         if add_extra_widget:
-            if isinstance(add_extra_widget, QLayout):
-                outer_layout.addLayout(add_extra_widget)
-            else:
-                outer_layout.addWidget(add_extra_widget)
+            outer_layout.addLayout(add_extra_widget)
 
         parent_layout.addLayout(outer_layout)
+
+    def refresh_upgrade_texts(self):
+        for button, text_func in getattr(self, 'upgrade_buttons', []):
+            if text_func:
+                button.setText(text_func())
+
 
     def get_random_poo_type(self):
         level = self.current_level  # Assume this is defined

@@ -17,13 +17,12 @@ class Pet(QWidget):
         self.setup_window()
         initialize_settings(self)
         self.sprite_variant = 00
+        self.POO_TYPES = get_poo_types()
         initialize_sprites(self)
         initialize_sounds(self)
         setup_timers(self)
         self.setup_position() 
-        self.POO_TYPES = get_poo_types()
-        # self.spawned_poo = [] # possibly for deletion
-        
+        self.spawned_poo = []   
 
     def setup_window(self):
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)

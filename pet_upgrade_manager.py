@@ -23,7 +23,10 @@ class PetUpgradeManager:
             self.panel.xp_bar.setValue(xp - cost)
             self.panel.pet.poo_units_refil_time_value += 1
             self.panel.pet.auto_poo_refill_upgrade_cost *= 50
-            self.panel.info_label.setText(f"Upgrade success! Next cost: {self.panel.pet.auto_poo_refill_upgrade_cost} XP")
+            self.panel.info_label.setText(
+                f"Upgrade success! Refill amount: {self.panel.pet.poo_units_refil_time_value}. "
+                f"Next cost: {self.panel.pet.auto_poo_refill_upgrade_cost} XP"
+            )
         else:
             self.panel.info_label.setText(f"Need {cost} XP! You have {xp}.")
 
@@ -34,7 +37,11 @@ class PetUpgradeManager:
             self.panel.xp_bar.setValue(xp - cost)
             self.panel.pet.bladder_refil_timer -= 100
             self.panel.pet.bladder_regen_speed_cost *= 30
-            self.panel.info_label.setText(f"Upgrade success! Next cost: {self.panel.pet.bladder_regen_speed_cost} XP")
+            self.panel.info_label.setText(
+                f"Upgrade success! New bladder refill time: {self.panel.pet.bladder_refil_timer}ms "
+                f"({self.panel.pet.bladder_refil_timer / 1000:.2f}s). "
+                f"Next cost: {self.panel.pet.bladder_regen_speed_cost} XP"
+            )
         else:
             self.panel.info_label.setText(f"Need {cost} XP! You have {xp}.")
 
@@ -56,11 +63,16 @@ class PetUpgradeManager:
         if xp >= cost:
             self.panel.xp_bar.setValue(xp - cost)
             normal_poo = self.panel.pet.POO_TYPES["normal"]
+            normal_poo.bladder_value_decrease = max(normal_poo.bladder_value_decrease - 1, 0)
+
             for poo in self.panel.pet.spawned_poo:
                 if poo.poo_type.name == "normal":
                     poo.poo_type.bladder_value_decrease = normal_poo.bladder_value_decrease
             self.panel.pet.less_bladder_use_cost += 50
-            self.panel.info_label.setText(f"Upgrade success! Next cost: {self.panel.pet.less_bladder_use_cost} XP")
+            self.panel.info_label.setText(
+                f"Upgrade success! bladder value decrease: {normal_poo.bladder_value_decrease}. "
+                f"Next cost: {self.panel.pet.less_bladder_use_cost} XP"
+            )
         else:
             self.panel.info_label.setText(f"Need {cost} XP! You have {xp}.")
 
@@ -80,7 +92,10 @@ class PetUpgradeManager:
                 if poo.poo_type.name == "normal":
                     poo.poo_type = self.POO_TYPES["normal"]
             
-            self.panel.info_label.setText(f"Upgrade success! Next cost: {self.panel.pet.poo_return_more_bladder_cost} XP")
+            self.panel.info_label.setText(
+                f"Upgrade success! bladder value return: {new_return}. "
+                f"Next cost: {self.panel.pet.poo_return_more_bladder_cost} XP"
+            )
         else:
             self.panel.info_label.setText(f"Need {cost} XP! You have {xp}.")
 
@@ -98,7 +113,14 @@ class PetUpgradeManager:
             else:
                 self.panel.pet.auto_poop_interval = max(2500, self.panel.pet.auto_poop_interval - 100)
                 self.panel.pet.poop_auto_timer.start(self.panel.pet.auto_poop_interval)
+
             self.panel.pet.auto_poop_cost *= 50
-            self.panel.info_label.setText(f"Upgrade success! Next cost: {self.panel.pet.auto_poop_cost} XP")
+            self.panel.info_label.setText(
+                f"Upgrade success! Interval is now {self.panel.pet.auto_poop_interval / 1000:.1f}s. "
+                f"Next cost: {self.panel.pet.auto_poop_cost} XP"
+            )
+            self.panel.refresh_upgrade_texts()
         else:
             self.panel.info_label.setText(f"Need {cost} XP! You have {xp}.")
+
+

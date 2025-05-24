@@ -89,17 +89,18 @@ poop_btn = ("""
             }
         """)
 def get_upgrade_btn(self):
+    
     return [
             {
                 "icon_0": "assets/reg_butt0.png",
                 "icon_1": "assets/reg_butt1.png",
-                "text_func": lambda: f"Bladder auto refills \nCurrent cost: {self.pet.auto_poo_refill_upgrade_cost}",
+                "text_func": lambda: f"Bladder auto refills. Refill amount per interval: {self.pet.poo_units_refil_time_value}. \nCurrent cost: {self.pet.auto_poo_refill_upgrade_cost}",
                 "callback": self.upgrades.reg_button,
             },
             {
                 "icon_0": "assets/reg_time_butt0.png",
                 "icon_1": "assets/reg_time_butt1.png",
-                "text_func": lambda: f"Bladder regen speed \nCurrent cost: {self.pet.bladder_regen_speed_cost}",
+                "text_func": lambda: f"Bladder regen speed. New bladder refill time intreval: {self.pet.bladder_refil_timer / 1000:.1f}s. \nCurrent cost: {self.pet.bladder_regen_speed_cost}",
                 "callback": self.upgrades.reg_button_time,
             },
             {
@@ -111,19 +112,27 @@ def get_upgrade_btn(self):
             {
                 "icon_0": "assets/less_bladder_use_to_poop_butt0.png",
                 "icon_1": "assets/less_bladder_use_to_poop_butt1.png",
-                "text_func": lambda: f"Less bladder used when pooping \nCurrent cost: {self.pet.less_bladder_use_cost}",
+                "text_func": lambda: (
+                    f"Less bladder used when pooping. bladder value decrease per use: "
+                    f"{self.pet.POO_TYPES['normal'].bladder_value_decrease}. \n"
+                    f"Current cost: {self.pet.less_bladder_use_cost}"
+                ),
                 "callback": self.upgrades.less_bladder_use,
             },
             {
                 "icon_0": "assets/nutrition_up0.png",
                 "icon_1": "assets/nutrition_up1.png",
-                "text_func": lambda: f"Poop is more nutritious \nCurrent cost: {self.pet.poo_return_more_bladder_cost}",
+                "text_func": lambda: (
+                    f"Poop is more nutritious. bladder value return per poo eaten: "
+                    f"{self.pet.POO_TYPES['normal'].bladder_value_return}. \n"
+                    f"Current cost: {self.pet.poo_return_more_bladder_cost}"
+                ),
                 "callback": self.upgrades.poo_return_more_bladder,
             },
             {
                 "icon_0": "assets/auto_poop_up0.png",
                 "icon_1": "assets/auto_poop_up1.png",
-                "text_func": lambda: f"Pet poops on its own \nCurrent cost: {self.pet.auto_poop_cost}",
+                "text_func": lambda: f"Pet poops on its own. current interval: {self.pet.auto_poop_interval / 1000:.1f}s. \nCurrent cost: {self.pet.auto_poop_cost}",
                 "callback": self.upgrades.auto_poop,
             },
         ]
