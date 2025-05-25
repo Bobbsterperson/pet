@@ -25,6 +25,7 @@ def initialize_settings(self):
     self.less_bladder_use_cost = 50
     self.poo_return_more_bladder_cost = 50
     self.auto_poop_cost = 70
+    self.self_poop_skill_cost = 70
 
     self.stored_overflow_xp = 0
     self.bladder_bar_cap = 100
@@ -32,3 +33,6 @@ def initialize_settings(self):
     self.text_bar_size = 80
 
     self.always_on_top = False
+
+    self.bladder_value_decrease_units = 0
+    self.bladder_value_increases_units = 0

@@ -72,17 +72,15 @@ class PetUpgradeManager:
         cost = self.panel.pet.less_bladder_use_cost
         if xp >= cost:
             self.panel.xp_bar.setValue(xp - cost)
-
             for key, poo in self.panel.pet.POO_TYPES.items():
                 if self.panel.current_level >= poo.min_level:
                     poo.bladder_value_decrease = max(poo.bladder_value_decrease - 1, 0)
-
                     # Also update spawned poos
                     for spawned in self.panel.pet.spawned_poo:
                         if spawned.poo_type.name == poo.name:
                             spawned.poo_type.bladder_value_decrease = poo.bladder_value_decrease
-
             self.panel.pet.less_bladder_use_cost += 50
+            self.panel.pet.bladder_value_decrease_units += 1
             self.panel.info_label.setText(
                 f"Upgrade success! All unlocked poo types now use less bladder. "
                 f"Next cost: {self.panel.pet.less_bladder_use_cost} XP"
@@ -105,6 +103,7 @@ class PetUpgradeManager:
                             spawned.poo_type.bladder_value_return = poo.bladder_value_return
 
             self.panel.pet.poo_return_more_bladder_cost += 50
+            self.panel.pet.bladder_value_increases_units += 1
             self.panel.info_label.setText(
                 f"Upgrade success! All unlocked poo types now restore more bladder. "
                 f"Next cost: {self.panel.pet.poo_return_more_bladder_cost} XP"
@@ -114,14 +113,38 @@ class PetUpgradeManager:
 
     def auto_poop(self):
         xp = self.panel.xp_bar.value()
+        cost = self.panel.pet.self_poop_skill_cost  # Assuming this is set somewhere in your class
+
+        if self.panel.pet.poop_auto_timer.isActive():
+            self.panel.info_label.setText("Auto-poop is already active.")
+            return
+
+        if xp < cost:
+            self.panel.info_label.setText(f"Need {cost} XP to activate auto-poop. You have {xp}.")
+            return
+
+        # Deduct XP and start the timer
+        self.panel.xp_bar.setValue(xp - cost)
+        self.panel.pet.poop_auto_timer.start(self.panel.pet.auto_poop_interval)
+
+        self.panel.info_label.setText(
+            f"Auto-poop activated! Interval: {self.panel.pet.auto_poop_interval / 1000:.1f}s. "
+            f"({cost} XP spent)"
+        )
+
+
+    def upgrade_auto_poop_timer(self):
+        xp = self.panel.xp_bar.value()
         cost = self.panel.pet.auto_poop_cost
+
+        if not self.panel.pet.poop_auto_timer.isActive():
+            self.panel.info_label.setText("Activate auto-poop first.")
+            return
+
         if xp >= cost:
             self.panel.xp_bar.setValue(xp - cost)
-            if not self.panel.pet.poop_auto_timer.isActive():
-                self.panel.pet.poop_auto_timer.start(self.panel.pet.auto_poop_interval)
-            else:
-                self.panel.pet.auto_poop_interval = max(2500, self.panel.pet.auto_poop_interval - 100)
-                self.panel.pet.poop_auto_timer.start(self.panel.pet.auto_poop_interval)
+            self.panel.pet.auto_poop_interval = max(2500, self.panel.pet.auto_poop_interval - 100)
+            self.panel.pet.poop_auto_timer.start(self.panel.pet.auto_poop_interval)
 
             self.panel.pet.auto_poop_cost *= 50
             self.panel.info_label.setText(
@@ -131,5 +154,8 @@ class PetUpgradeManager:
             self.panel.refresh_upgrade_texts()
         else:
             self.panel.info_label.setText(f"Need {cost} XP! You have {xp}.")
+
+
+
 
 

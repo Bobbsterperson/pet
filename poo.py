@@ -48,9 +48,8 @@ def get_poo_types():
         "monster": PooType("monster", 1.5, load_sprites("monster"), spawn_chance=0.07, spawn_chance_grow_per_level=0.025, bladder_value_decrease=40, bladder_value_return=10, xp_value=250, min_level=3),
         "egg": PooType("egg", 0.8, load_sprites("egg"), spawn_chance=0.06, spawn_chance_grow_per_level=0.02, bladder_value_decrease=30, bladder_value_return=10, xp_value=250, min_level=3),
         "silver": PooType("silver", 1.1, load_sprites("silver"), spawn_chance=0.05, spawn_chance_grow_per_level=0.02, bladder_value_decrease=25, bladder_value_return=30, xp_value=250, min_level=3),
-        "gold": PooType("gold", 1.3, load_sprites("gold"), spawn_chance=0.03, spawn_chance_grow_per_level=0.015, bladder_value_decrease=20, bladder_value_return=-10, xp_value=250, min_level=3),
+        "gold": PooType("gold", 1.3, load_sprites("gold"), spawn_chance=0.03, spawn_chance_grow_per_level=0.015, bladder_value_decrease=20, bladder_value_return=10, xp_value=250, min_level=3),
     }
-
 class Poo:
     def __init__(self, parent, poo_type: PooType, x, y):
         self.parent = parent
