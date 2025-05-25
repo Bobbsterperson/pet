@@ -89,7 +89,6 @@ poop_btn = ("""
             }
         """)
 def get_upgrade_btn(self):
-    
     return [
             {
                 "icon_0": "assets/reg_butt0.png",

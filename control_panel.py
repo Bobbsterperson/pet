@@ -138,26 +138,19 @@ class PetControlPanel(QWidget):
 
     def add_menu_buttons(self, parent_layout):
         buttons_info = get_menu_btn(self)
-
-        # Prepare the extra pet QLabel for menu buttons
         self.pet_frame_label = QLabel()
         label_height = 114
         self.pet_frame_label.setFixedHeight(label_height)
-
         pet_pixmap = self.pet.get_current_pixmap()
         if pet_pixmap.isNull() or pet_pixmap.height() == 0:
-            # fallback pixmap or default aspect ratio
             aspect_ratio = 1.0
             pet_pixmap = QPixmap(100, 100)  # placeholder empty pixmap of 100x100
         else:
             aspect_ratio = pet_pixmap.width() / pet_pixmap.height()
-
         label_width = int(label_height * aspect_ratio)
         self.pet_frame_label.setFixedWidth(label_width)
         self.pet_frame_label.setPixmap(pet_pixmap)
         self.pet_frame_label.setScaledContents(True)
-
-
         # Use a horizontal layout for spacing + grid layout + pet label
         extra_layout = QHBoxLayout()
         extra_layout.addSpacing(15)
@@ -177,7 +170,6 @@ class PetControlPanel(QWidget):
             grid_layout.addWidget(button, row, col)
         extra_layout.addLayout(grid_layout)
         extra_layout.addWidget(self.pet_frame_label)
-
         # Pass extra_layout to add_buttons
         self.add_buttons(parent_layout, [], add_extra_widget=extra_layout)
 
@@ -289,8 +281,7 @@ class PetControlPanel(QWidget):
             poo_type = self.get_random_poo_type()
             if self.poop_bar.value() >= poo_type.bladder_value_decrease:
                 self.poop_bar.setValue(int(self.poop_bar.value() - poo_type.bladder_value_decrease))
-                self.pet.poop(poo_type)  # Make sure `pet.poop()` accepts a PooType argument
-
+                self.pet.poop(poo_type)
                 self.lock_button(1000)
             else:
                 self.poop_button.setText("Too tired to poop")
@@ -318,7 +309,6 @@ class PetControlPanel(QWidget):
         spacing = layout.spacing()
         margins = layout.contentsMargins()
         total_height += margins.top() + margins.bottom()
-
         def add_widget_height(widget, is_first=False):
             nonlocal total_height
             if widget and widget.isVisible():
@@ -340,7 +330,6 @@ class PetControlPanel(QWidget):
             if w and w.isVisible():
                 add_widget_height(w, is_first=not first_visible_found)
                 first_visible_found = True
-
         # Enforce minimum/maximum height limits if necessary
         min_height = 200
         max_height = 1200
@@ -361,35 +350,24 @@ class PetControlPanel(QWidget):
         outer_layout = QHBoxLayout()
         outer_layout.addStretch()
         grid_layout = QGridLayout()
-
-        # Store buttons for later updates
         self.upgrade_buttons = []
-
         for index, info in enumerate(buttons_info):
             initial_text = info.get("text", "")
             button = InfoIconButton(info["icon_0"], info["icon_1"], initial_text)
             text_func = info.get("text_func")
-
             if text_func:
                 button.hovered.connect(lambda _, f=text_func: self.update_info(f()))
             else:
                 button.hovered.connect(lambda _, t=initial_text: self.update_info(t))
-
             button.unhovered.connect(self.clear_info)
             button.clicked.connect(info["callback"])
-
-            # Store button and its update function for later
             self.upgrade_buttons.append((button, text_func))
-
             row = index // 10
             col = index % 10
             grid_layout.addWidget(button, row, col)
-
         outer_layout.addLayout(grid_layout)
-
         if add_extra_widget:
             outer_layout.addLayout(add_extra_widget)
-
         parent_layout.addLayout(outer_layout)
 
     def refresh_upgrade_texts(self):
@@ -397,32 +375,26 @@ class PetControlPanel(QWidget):
             if text_func:
                 button.setText(text_func())
 
-
     def get_random_poo_type(self):
-        level = self.current_level  # Assume this is defined
-        # Only include types available at the current level
         eligible_poo_types = {
             key: poo for key, poo in self.POO_TYPES.items()
-            if level >= poo.min_level
+            if self.current_level >= poo.min_level
         }
-
         adjusted_chances = {
-            key: poo.spawn_chance + (poo.growth_rate * level)
+            key: poo.spawn_chance + poo.spawn_chance_grow_per_level
             for key, poo in eligible_poo_types.items()
         }
-
         total = sum(adjusted_chances.values())
         if total == 0:
             return self.POO_TYPES["normal"]
-
         r = random.uniform(0, total)
         upto = 0
         for key, chance in adjusted_chances.items():
-            if upto + chance >= r:
-                return self.POO_TYPES[key]
             upto += chance
-
+            if r <= upto:
+                return self.POO_TYPES[key]
         return self.POO_TYPES["normal"]
+
 
     def weak_achievement(self):
         if not hasattr(self, "achievements_widget"):
@@ -432,14 +404,14 @@ class PetControlPanel(QWidget):
     def achievement_stats(self, poo_type_key):
         if not hasattr(self, "achievements_widget"):
             return
-        poo_types = get_poo_types()
+        poo_types = self.pet.POO_TYPES
         if poo_type_key not in poo_types:
             self.update_info("Unknown achievement")
             return
         poo = poo_types[poo_type_key]
         stats = (
             f"Name: {poo.name}                                          Size: {poo.size}\n"
-            f"Spawn Chance: {poo.spawn_chance}                Growth Rate: {poo.spawn_chance_grow_per_level}\n"
+            f"Spawn Chance: {poo.spawn_chance} >>>----------->>> per lvl: {poo.spawn_chance_grow_per_level}\n"
             f"Bladder Decrease: {poo.bladder_value_decrease}              Bladder Return: {poo.bladder_value_return}\n"
             f"XP Value: {poo.xp_value}                           Minimum Level: {poo.min_level}"
         )

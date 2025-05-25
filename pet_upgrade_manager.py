@@ -9,12 +9,22 @@ class PetUpgradeManager:
     def lvl_up(self):
         self.panel.current_level += 1
         self.panel.pet.play_meh_sound()
+        for key, poo in self.panel.pet.POO_TYPES.items():
+            if self.panel.current_level >= poo.min_level:
+                # can change how different poo types chance to spawn depending on level grows
+                if key in ("toxic", "monster", "gold"):
+                    poo.spawn_chance_grow_per_level += 0.004
+                else:
+                    poo.spawn_chance_grow_per_level += 0.002
         old_max = self.panel.pet.max_xp
         new_max = int(old_max * 1.45)
         self.panel.set_max_xp(new_max)
         self.panel.xp_bar.setMaximum(new_max)
         self.panel.xp_bar.setValue(0)
-        self.panel.info_label.setText(f"🎉 Level Up! Now Level {self.panel.current_level}. New XP cap: {new_max}")
+        self.panel.info_label.setText(
+            f"🎉 Level Up! Now Level {self.panel.current_level}. New XP cap: {new_max}"
+        )
+
 
     def reg_button(self):
         xp = self.panel.xp_bar.value()
@@ -62,38 +72,41 @@ class PetUpgradeManager:
         cost = self.panel.pet.less_bladder_use_cost
         if xp >= cost:
             self.panel.xp_bar.setValue(xp - cost)
-            normal_poo = self.panel.pet.POO_TYPES["normal"]
-            normal_poo.bladder_value_decrease = max(normal_poo.bladder_value_decrease - 1, 0)
 
-            for poo in self.panel.pet.spawned_poo:
-                if poo.poo_type.name == "normal":
-                    poo.poo_type.bladder_value_decrease = normal_poo.bladder_value_decrease
+            for key, poo in self.panel.pet.POO_TYPES.items():
+                if self.panel.current_level >= poo.min_level:
+                    poo.bladder_value_decrease = max(poo.bladder_value_decrease - 1, 0)
+
+                    # Also update spawned poos
+                    for spawned in self.panel.pet.spawned_poo:
+                        if spawned.poo_type.name == poo.name:
+                            spawned.poo_type.bladder_value_decrease = poo.bladder_value_decrease
+
             self.panel.pet.less_bladder_use_cost += 50
             self.panel.info_label.setText(
-                f"Upgrade success! bladder value decrease: {normal_poo.bladder_value_decrease}. "
+                f"Upgrade success! All unlocked poo types now use less bladder. "
                 f"Next cost: {self.panel.pet.less_bladder_use_cost} XP"
             )
         else:
             self.panel.info_label.setText(f"Need {cost} XP! You have {xp}.")
-
 
     def poo_return_more_bladder(self):
         xp = self.panel.xp_bar.value()
         cost = self.panel.pet.poo_return_more_bladder_cost
         if xp >= cost:
             self.panel.xp_bar.setValue(xp - cost)
-            normal_poo = self.POO_TYPES["normal"]
-            new_return = normal_poo.bladder_value_return + 1
-            self.POO_TYPES["normal"] = replace(normal_poo, bladder_value_return=new_return)
-            self.panel.pet.poo_return_more_bladder_cost *= 50
-            
-            # Update all existing "normal" poos with new PooType
-            for poo in self.panel.pet.spawned_poo:
-                if poo.poo_type.name == "normal":
-                    poo.poo_type = self.POO_TYPES["normal"]
-            
+
+            for key, poo in self.panel.pet.POO_TYPES.items():
+                if self.panel.current_level >= poo.min_level:
+                    poo.bladder_value_return += 1
+
+                    for spawned in self.panel.pet.spawned_poo:
+                        if spawned.poo_type.name == poo.name:
+                            spawned.poo_type.bladder_value_return = poo.bladder_value_return
+
+            self.panel.pet.poo_return_more_bladder_cost += 50
             self.panel.info_label.setText(
-                f"Upgrade success! bladder value return: {new_return}. "
+                f"Upgrade success! All unlocked poo types now restore more bladder. "
                 f"Next cost: {self.panel.pet.poo_return_more_bladder_cost} XP"
             )
         else:
