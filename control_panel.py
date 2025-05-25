@@ -54,10 +54,10 @@ class PetControlPanel(QWidget):
         layout.addWidget(self.skills_widget)
 
         self.achievements_widget = QWidget()
-        achievements_layout = QHBoxLayout(self.achievements_widget)
-        achievements_layout.setContentsMargins(0, 0, 0, 0)
-        achievements_layout.setSpacing(10)
-        self.add_achievements_buttons(achievements_layout)
+        self.achievements_layout = QHBoxLayout(self.achievements_widget)
+        self.achievements_layout.setContentsMargins(0, 0, 0, 0)
+        self.achievements_layout.setSpacing(10)
+        self.add_achievements_buttons(self.achievements_layout)
         layout.addWidget(self.achievements_widget)
 
         # Hide these initially
@@ -417,3 +417,19 @@ class PetControlPanel(QWidget):
         )
         self.update_info(stats)
         self.info_label.adjustSize()
+
+    def clear_achievement_buttons(self):
+        self.clear_layout(self.achievements_layout)
+
+    def clear_layout(self, layout):
+        if layout is not None:
+            while layout.count():
+                item = layout.takeAt(0)
+                widget = item.widget()
+                if widget is not None:
+                    widget.setParent(None)
+                    widget.deleteLater()
+                elif item.layout():
+                    self.clear_layout(item.layout())
+
+

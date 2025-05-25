@@ -201,21 +201,29 @@ def get_achievement_btn(self):
     buttons = []
     current_level = self.current_level
 
-    def make_callback(poo_key):
-        return lambda: self.achievement_stats(poo_key)
+    def make_callback(poo_key, unlocked):
+        if unlocked:
+            return lambda: self.achievement_stats(poo_key)
+        else:
+            return lambda: self.update_info("Achievement locked. Reach higher level to unlock.")
 
-    def make_text_func(poo_key):
-        return lambda: f"You unlocked {self.pet.POO_TYPES[poo_key].name.capitalize()} poop"
+    def make_text_func(poo_key, unlocked):
+        if unlocked:
+            return lambda: f"You unlocked {self.pet.POO_TYPES[poo_key].name.capitalize()} poop"
+        else:
+            return lambda: "Achievement locked"
 
     for key, poo in self.pet.POO_TYPES.items():
+        unlocked = current_level >= poo.min_level
         buttons.append({
-            "icon_0": f"assets/poo/{key}_0.png",
-            "icon_1": f"assets/poo/{key}_1.png",
-            "text_func": make_text_func(key),
-            "callback": make_callback(key),
-            "enabled": current_level >= poo.min_level,
-            "visible": current_level >= poo.min_level,
+            "icon_0": f"assets/poo/{key}_0.png" if unlocked else "assets/hidden_0.png",
+            "icon_1": f"assets/poo/{key}_1.png" if unlocked else "assets/hidden_1.png",
+            "text_func": make_text_func(key, unlocked),
+            "callback": make_callback(key, unlocked),
+            "enabled": unlocked,
+            "visible": True,  # keep visible so users see locked icons
         })
+
     extra_buttons = [
         {
             "icon_0": "assets/pet/walk00.png",
@@ -236,108 +244,3 @@ def get_achievement_btn(self):
     ]
 
     return buttons + extra_buttons
-
-
-
-# def get_achievement_btn(self):
-#     return [
-#             {
-#                 "icon_0": "assets/pet/walk00.png",
-#                 "icon_1": "assets/pet/idle00.png",
-#                 "text_func": lambda: "you unlocked weak poop",
-#                 "callback": self.weak_achievement,
-#                 # "enabled": False
-#             },
-#             {
-#                 "icon_0": "assets/pet/walk10.png",
-#                 "icon_1": "assets/pet/idle10.png",
-#                 "text_func": lambda: "you unlocked weak poop",
-#                 "callback": self.weak_achievement,
-#                 # "enabled": False
-#             },
-#             {
-#                 "icon_0": "assets/poo/weak_0.png",
-#                 "icon_1": "assets/poo/weak_1.png",
-#                 "text_func": lambda: "you unlocked weak poop",
-#                 "callback": lambda: self.achievement_stats("weak"),
-#                 # "enabled": False
-#             },
-#             {
-#                 "icon_0": "assets/poo/normal_0.png",
-#                 "icon_1": "assets/poo/normal_1.png",
-#                 "text_func": lambda: "you unlocked weak poop",
-#                 "callback": lambda: self.achievement_stats("normal"),
-#                 # "enabled": False
-#             },
-#             {
-#                 "icon_0": "assets/poo/bloody_0.png",
-#                 "icon_1": "assets/poo/bloody_1.png",
-#                 "text_func": lambda: "you unlocked weak poop",
-#                 "callback": lambda: self.achievement_stats("bloody"),
-#                 # "enabled": False
-#             },
-#             {
-#                 "icon_0": "assets/poo/chilly_0.png",
-#                 "icon_1": "assets/poo/chilly_1.png",
-#                 "text_func": lambda: "you unlocked weak poop",
-#                 "callback": lambda: self.achievement_stats("chilly"),
-#                 # "enabled": False
-#             },
-#             {
-#                 "icon_0": "assets/poo/corny_0.png",
-#                 "icon_1": "assets/poo/corny_1.png",
-#                 "text_func": lambda: "you unlocked weak poop",
-#                 "callback": lambda: self.achievement_stats("corny"),
-#                 # "enabled": False
-#             },
-#             {
-#                 "icon_0": "assets/poo/egg_0.png",
-#                 "icon_1": "assets/poo/egg_1.png",
-#                 "text_func": lambda: "you unlocked weak poop",
-#                 "callback": lambda: self.achievement_stats("egg"),
-#                 # "enabled": False
-#             },
-#             {
-#                 "icon_0": "assets/poo/gold_0.png",
-#                 "icon_1": "assets/poo/gold_1.png",
-#                 "text_func": lambda: "you unlocked weak poop",
-#                 "callback": lambda: self.achievement_stats("gold"),
-#                 # "enabled": False
-#             },
-#             {
-#                 "icon_0": "assets/poo/hard_0.png",
-#                 "icon_1": "assets/poo/hard_1.png",
-#                 "text_func": lambda: "you unlocked weak poop",
-#                 "callback": lambda: self.achievement_stats("hard"),
-#                 # "enabled": False
-#             },
-#             {
-#                 "icon_0": "assets/poo/monster_0.png",
-#                 "icon_1": "assets/poo/monster_1.png",
-#                 "text_func": lambda: "you unlocked weak poop",
-#                 "callback": lambda: self.achievement_stats("monster"),
-#                 # "enabled": False
-#             },
-#             {
-#                 "icon_0": "assets/poo/silver_0.png",
-#                 "icon_1": "assets/poo/silver_1.png",
-#                 "text_func": lambda: "you unlocked weak poop",
-#                 "callback": lambda: self.achievement_stats("silver"),
-#                 # "enabled": False
-#             },
-#             {
-#                 "icon_0": "assets/poo/toxic_0.png",
-#                 "icon_1": "assets/poo/toxic_1.png",
-#                 "text_func": lambda: "you unlocked weak poop",
-#                 "callback": lambda: self.achievement_stats("toxic"),
-#                 # "enabled": False
-#             },
-#             {
-#                 "icon_0": "assets/poo/runny_0.png",
-#                 "icon_1": "assets/poo/runny_1.png",
-#                 "text_func": lambda: "you unlocked weak poop",
-#                 "callback": lambda: self.achievement_stats("runny"),
-#                 # "enabled": False
-#             },
-#         ]
-

@@ -9,13 +9,21 @@ class PetUpgradeManager:
     def lvl_up(self):
         self.panel.current_level += 1
         self.panel.pet.play_meh_sound()
+
+        # Update achievement buttons properly:
+        # Clear old achievement buttons first, then add new ones
+        self.panel.clear_achievement_buttons()  # You need to implement this method
+        self.panel.add_achievements_buttons(self.panel.achievements_layout)  # Pass your actual layout
+
+        # self.panel.add_skill_buttons()
+
         for key, poo in self.panel.pet.POO_TYPES.items():
             if self.panel.current_level >= poo.min_level:
-                # can change how different poo types chance to spawn depending on level grows
                 if key in ("toxic", "monster", "gold"):
                     poo.spawn_chance_grow_per_level += 0.004
                 else:
                     poo.spawn_chance_grow_per_level += 0.002
+
         old_max = self.panel.pet.max_xp
         new_max = int(old_max * 1.45)
         self.panel.set_max_xp(new_max)
@@ -24,6 +32,7 @@ class PetUpgradeManager:
         self.panel.info_label.setText(
             f"🎉 Level Up! Now Level {self.panel.current_level}. New XP cap: {new_max}"
         )
+
 
 
     def reg_button(self):
