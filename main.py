@@ -142,9 +142,15 @@ class Pet(QWidget):
 
     def adjust_volume(self):
         if 4 <= self.pickup_counter <= 8 and not self.volume_set_max:
-            self.set_volume_max()
+            if self.sound_volume == 0.0:
+                return
+            else:
+                self.set_volume_max()
         elif self.volume_set_max:
-            self.reset_volume()
+            if self.sound_volume == 0.0:
+                return
+            else:
+                self.reset_volume()
 
     def mouseMoveEvent(self, event):
         if self.old_pos:
@@ -178,9 +184,9 @@ class Pet(QWidget):
             sound.setVolume(0.2)
         self.volume_set_max = False
 
-    def play_meh_sound(self):
-        self.meh_sound.setVolume(1.0)
-        self.meh_sound.play()
+    def play_lvl_up_sound_f(self):
+        self.play_lvl_up_sound.setVolume(self.sound_volume)
+        self.play_lvl_up_sound.play()
 
     def poop(self, poo_type):
         if self.gravity_timer.isActive() or self.is_pooping or self.is_eating:

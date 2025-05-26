@@ -5,6 +5,7 @@ from PyQt5.QtGui import QKeySequence, QPixmap
 from pet_upgrade_manager import PetUpgradeManager
 from poo import get_poo_types
 from PyQt5.QtWidgets import QSizePolicy
+from sound import initialize_sounds
 import random
 from panel_stylesheets import panel, info_bar, bladder_bar, xp_bar, poop_btn, get_upgrade_btn, get_menu_btn, get_skill_btn, get_achievement_btn
 
@@ -173,9 +174,15 @@ class PetControlPanel(QWidget):
         # Pass extra_layout to add_buttons
         self.add_buttons(parent_layout, [], add_extra_widget=extra_layout)
 
-
     def double_poop_production(self):
         pass
+
+    def mute_sound(self):
+        if self.pet.sound_volume == 0.0:
+            self.pet.sound_volume = 0.2
+        else:
+            self.pet.sound_volume = 0.0
+        initialize_sounds(self.pet)
 
     def hide_achievements(self):
         if hasattr(self, "achievements_widget"):

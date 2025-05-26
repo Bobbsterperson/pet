@@ -11,9 +11,9 @@ def initialize_sounds(self):
     self.last_pickup_sound_time = 0
     self.pickup_sound_cooldown = 500
     self.last_played_sound = None
-    self.meh_sound = QSoundEffect()
-    self.meh_sound.setSource(QUrl.fromLocalFile("assets/sound/meh.wav"))
-    self.meh_sound.setVolume(self.sound_volume)
+    self.play_lvl_up_sound = QSoundEffect()
+    self.play_lvl_up_sound.setSource(QUrl.fromLocalFile("assets/sound/meh.wav"))
+    self.play_lvl_up_sound.setVolume(self.sound_volume)
     self.poop_sound = QSoundEffect()
     self.poop_sound.setSource(QUrl.fromLocalFile("assets/sound/poop.wav"))
     self.poop_sound.setVolume(self.sound_volume)

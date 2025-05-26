@@ -138,6 +138,13 @@ def get_upgrade_btn(self):
 def get_menu_btn(self):
     return [
             {
+                "icon_0": "assets/mute0.png",
+                "icon_1": "assets/mute1.png",
+                "text_func": lambda: "Mute sound",
+                "callback": self.mute_sound,
+
+            },
+            {
                 "icon_0": "assets/upgrades0.png",
                 "icon_1": "assets/upgrades1.png",
                 "text_func": lambda: "Upgrades",
