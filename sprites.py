@@ -12,7 +12,7 @@ def initialize_sprites(self):
 
     self.sprites = {}
 
-    actions = ["walk", "idle", "shiv", "poop", "eat"]
+    actions = ["walk", "idle", "shiv", "poop", "eat", "achievement"]
     for action in actions:
         self.sprites[action] = [
             QPixmap(f"assets/pet/{action}{self.sprite_variant}{i}.png") for i in range(4)

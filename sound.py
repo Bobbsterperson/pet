@@ -20,3 +20,6 @@ def initialize_sounds(self):
     self.eat_sound = QSoundEffect()
     self.eat_sound.setSource(QUrl.fromLocalFile("assets/sound/eat.wav"))
     self.eat_sound.setVolume(self.sound_volume)
+    self.achievement_sound = QSoundEffect()
+    self.achievement_sound.setSource(QUrl.fromLocalFile("assets/sound/achievement.wav"))
+    self.achievement_sound.setVolume(self.sound_volume)  

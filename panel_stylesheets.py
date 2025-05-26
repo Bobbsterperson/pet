@@ -140,7 +140,7 @@ def get_menu_btn(self):
             {
                 "icon_0": "assets/mute0.png",
                 "icon_1": "assets/mute1.png",
-                "text_func": lambda: "Mute sound",
+                "text_func": lambda: "Toggle mute/unmute sound",
                 "callback": self.mute_sound,
 
             },

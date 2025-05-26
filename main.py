@@ -197,10 +197,51 @@ class Pet(QWidget):
         self.current_action = "poop"
         self.current_poo_type = poo_type  # Save for use in animation
         self.animation_timer.stop()
-
         self.poop_animation_timer = QTimer(self)
         self.poop_animation_timer.timeout.connect(self.poop_animation)
         self.poop_animation_timer.start(self.animation_interval)
+
+    def achievement_get(self):
+        if self.gravity_timer.isActive() or self.is_pooping or self.is_eating:
+            return
+        self.achievement_sound.setVolume(self.sound_volume)
+        self.achievement_sound.play()
+        self.is_pooping = False
+        self.is_walking = False
+        self.frame = 0
+        self.current_action = "achievement_animation"
+        self.animation_timer.stop()
+        if hasattr(self, 'achievement_animation_timer'):
+            self.achievement_animation_timer.stop()
+            self.achievement_animation_timer.deleteLater()
+            del self.achievement_animation_timer
+        self.achievement_animation_timer = QTimer(self)
+        self.achievement_animation_timer.timeout.connect(self.animation_achievement)
+        self.achievement_animation_timer.start(self.animation_interval)
+
+    def animation_achievement(self):
+        achievement_frames = self.sprites["achievement"]
+
+        if self.frame >= len(achievement_frames):
+            if hasattr(self, 'achievement_animation_timer'):
+                self.achievement_animation_timer.stop()
+                self.achievement_animation_timer.deleteLater()
+                del self.achievement_animation_timer
+
+            self.is_pooping = False
+            self.is_walking = True
+            self.current_action = None
+            self.animation_timer.start(self.animation_interval)
+            self.frame = 0
+            return
+
+        pix = achievement_frames[self.frame]
+        if self.direction == "left":
+            pix = pix.transformed(QTransform().scale(-1, 1))
+        self.label.setPixmap(pix)
+        self.frame += 1
+
+
 
     def auto_poop_action(self):
         poo_type = self.control_panel.get_random_poo_type()

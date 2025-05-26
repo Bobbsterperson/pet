@@ -426,6 +426,7 @@ class PetControlPanel(QWidget):
         self.info_label.adjustSize()
 
     def clear_achievement_buttons(self):
+        self.pet.achievement_get() #maybe it wont be here
         self.clear_layout(self.achievements_layout)
 
     def clear_layout(self, layout):
