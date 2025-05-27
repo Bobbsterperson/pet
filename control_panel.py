@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QProgressBar, QLabel, QHBoxLayout, QGridLayout, QShortcut, QApplication, QLayout
+from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QProgressBar, QLabel, QHBoxLayout, QGridLayout, QShortcut, QApplication, QDesktopWidget
 from PyQt5.QtCore import Qt, QTimer
 from info_icon_button import InfoIconButton
 from PyQt5.QtGui import QKeySequence, QPixmap
@@ -19,8 +19,9 @@ class PetControlPanel(QWidget):
         self.current_level = 0
         self.POO_TYPES = get_poo_types()
 
-        self.setWindowTitle("Control Panel")
-        # self.setFixedSize(1000, 460)
+        self.setWindowTitle("Pet stuff")
+        self.setFixedSize(1000, 460)
+        # self.setMinimumSize(1000, self.sizeHint().height())
         self.setStyleSheet(panel)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
@@ -32,10 +33,19 @@ class PetControlPanel(QWidget):
         layout.setSpacing(20)
 
         # Habitat widget — safely initialized and hidden by default
+        # self.habitat_widget = PetHabitatWidget(self.pet)
+        # self.habitat_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        # self.habitat_widget.setMinimumHeight(160)
+        # self.habitat_widget.setVisible(False)
+        # layout.addWidget(self.habitat_widget)
 
-        self.habitat_widget = PetHabitatWidget(self.pet)
-        self.habitat_widget.setVisible(False)
-        layout.addWidget(self.habitat_widget)
+        # Colored label widget
+        # self.colored_label = QLabel("This is a colored label", self)
+        # self.setMinimumSize(1000, self.sizeHint().height())
+        # self.colored_label.setStyleSheet("background-color: #4682B4; color: white; font-size: 16px;")
+        # self.colored_label.setAlignment(Qt.AlignCenter)
+        # # self.colored_label.setVisible(False)
+        # layout.addWidget(self.colored_label)
 
         # Menu buttons
         self.menu_buttons_widget = QWidget()
@@ -85,7 +95,7 @@ class PetControlPanel(QWidget):
         self.info_label = QLabel("")
         self.info_label.setWordWrap(True)
         self.info_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
-        self.info_label.setMinimumHeight(self.pet.text_bar_size)
+        self.info_label.setMinimumHeight(self.pet.text_bar_size_min)
         self.info_label.setAlignment(Qt.AlignCenter)
         self.info_label.setStyleSheet(info_bar)
         layout.addWidget(self.info_label)
@@ -104,7 +114,7 @@ class PetControlPanel(QWidget):
         self._drag_pos = None
 
         # Safely connect habitat update
-        self.pet.sprite_changed.connect(self.habitat_widget.update_pet_sprite)
+        # self.pet.sprite_changed.connect(self.habitat_widget.update_pet_sprite)
 
     def create_bladder_bar(self):
         bar = QProgressBar()
@@ -312,18 +322,15 @@ class PetControlPanel(QWidget):
             else:
                 self.poop_button.setText("Too tired to poop")
                 self.poop_button.setEnabled(False)
-                QTimer.singleShot(1500, self.reset_button_text)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self._drag_pos = event.globalPos() - self.frameGeometry().topLeft()
             event.accept()
-
     def mouseMoveEvent(self, event):
         if event.buttons() & Qt.LeftButton and self._drag_pos:
             self.move(event.globalPos() - self._drag_pos)
             event.accept()
-
     def mouseReleaseEvent(self, event):
         self._drag_pos = None
         event.accept()
@@ -349,7 +356,7 @@ class PetControlPanel(QWidget):
             self.upgrades_widget if hasattr(self, 'upgrades_widget') else None,
             self.skills_widget if hasattr(self, 'skills_widget') else None,
             self.achievements_widget if hasattr(self, 'achievements_widget') else None,
-            self.habitat_widget if hasattr(self, 'habitat_widget') else None,
+            # self.habitat_widget if hasattr(self, 'habitat_widget') else None,
             self.poop_button
         ]
         first_visible_found = False
@@ -360,10 +367,12 @@ class PetControlPanel(QWidget):
                 first_visible_found = True
         # Enforce minimum/maximum height limits if necessary
         min_height = 200
-        max_height = 2500
+        screen_height = self.get_screen_height()
+        max_height = int(screen_height * 0.95)
         frame_height_margin = 40
 
         final_height = max(min_height, min(total_height + frame_height_margin, max_height))
+
         self.setMinimumSize(base_width, final_height)
         self.resize(base_width, final_height)  # explicitly resize after setting minimum
 
@@ -468,5 +477,8 @@ class PetControlPanel(QWidget):
                 elif item.layout():
                     self.clear_layout(item.layout())
 
-
+    @staticmethod
+    def get_screen_height():
+        screen = QDesktopWidget().availableGeometry()
+        return screen.height()
 
