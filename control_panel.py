@@ -40,12 +40,13 @@ class PetControlPanel(QWidget):
         # layout.addWidget(self.habitat_widget)
 
         # Colored label widget
-        # self.colored_label = QLabel("This is a colored label", self)
+        self.colored_label = QLabel("This is a colored label", self)
+        self.colored_label.setFixedHeight(150)
         # self.setMinimumSize(1000, self.sizeHint().height())
-        # self.colored_label.setStyleSheet("background-color: #4682B4; color: white; font-size: 16px;")
-        # self.colored_label.setAlignment(Qt.AlignCenter)
-        # # self.colored_label.setVisible(False)
-        # layout.addWidget(self.colored_label)
+        self.colored_label.setStyleSheet("background-color: #4682B4; color: white; font-size: 16px;")
+        self.colored_label.setAlignment(Qt.AlignCenter)
+        self.colored_label.hide()
+        layout.insertWidget(2, self.colored_label)
 
         # Menu buttons
         self.menu_buttons_widget = QWidget()
@@ -350,6 +351,7 @@ class PetControlPanel(QWidget):
                 total_height += widget.sizeHint().height()
         widgets_in_order = [
             self.menu_buttons_widget if hasattr(self, 'menu_buttons_widget') else None,
+            self.colored_label if hasattr(self, 'colored_label') else None,
             self.poop_bar,
             self.xp_bar,
             self.info_label,
@@ -482,3 +484,12 @@ class PetControlPanel(QWidget):
         screen = QDesktopWidget().availableGeometry()
         return screen.height()
 
+    def show_colored_label(self):
+        self.colored_label.show()
+
+    def toggle_colored_label(self):
+        if self.colored_label.isVisible():
+            self.colored_label.hide()
+        else:
+            self.colored_label.show()
+        self.update_panel_size()
