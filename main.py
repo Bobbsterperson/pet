@@ -38,7 +38,7 @@ class Pet(QWidget):
         self.move(self.screen.width() // 2, self.screen.height() - self.height())
 
     def update_sprite(self):
-        if self.is_pooping or self.is_eating:
+        if self.is_pooping or self.is_eating or self.is_hidden:
             return
         if self.is_dragging:
             pix = self.sprites["shiv"][self.frame % 4]
@@ -54,10 +54,15 @@ class Pet(QWidget):
         self.frame += 1
 
     def get_current_pixmap(self):
-        return getattr(self, "current_pixmap", QPixmap("assets/pet/idle0.png"))
+        pixmap = getattr(self, "current_pixmap", QPixmap("assets/pet/idle00.png"))
+        if pixmap.isNull():
+            print("Warning: get_current_pixmap() returned a null QPixmap.")
+            print("Check if 'assets/pet/idle00.png' exists and is a valid image.")
+        return pixmap
+
 
     def move_pet(self):
-        if self.old_pos is not None or self.gravity_timer.isActive():
+        if self.old_pos is not None or self.gravity_timer.isActive() or self.is_hidden:
             return
         if self.target_poo:
             if self.target_poo.is_deleted or not self.target_poo.label:
@@ -165,6 +170,8 @@ class Pet(QWidget):
         self.gravity_timer.start(30)
 
     def apply_gravity(self):
+        if self.is_hidden:
+            return
         self.velocity_y += 6
         new_y = self.y() + self.velocity_y
         if new_y >= self.screen.height() - self.height():
@@ -189,7 +196,7 @@ class Pet(QWidget):
         self.play_lvl_up_sound.play()
 
     def poop(self, poo_type):
-        if self.gravity_timer.isActive() or self.is_pooping or self.is_eating:
+        if self.gravity_timer.isActive() or self.is_pooping or self.is_eating: #or self.is_hidden
             return
         self.is_pooping = True
         self.is_walking = False
@@ -270,8 +277,7 @@ class Pet(QWidget):
         self.frame += 1
 
     def spawn_poo(self, poo_type):
-        self.poop_sound.play()
-        
+        self.poop_sound.play()       
         scale_factor = poo_type.size
         sprite = poo_type.sprites[0]
 
@@ -287,6 +293,8 @@ class Pet(QWidget):
 
 
     def cleanup_poop(self):
+        if self.is_hidden:
+            return
         now = QDateTime.currentMSecsSinceEpoch()
         pet_center = self.get_pet_center()       
         for poo in self.spawned_poo:
@@ -319,6 +327,8 @@ class Pet(QWidget):
             self.animation_timer.start(self.animation_interval)
 
     def handle_eat_animation(self, poo):
+        if self.is_hidden:
+            return
         poo.label.raise_()
         if self.eat_animation_timer or self.is_eating:
             return
@@ -370,6 +380,32 @@ class Pet(QWidget):
         self.label.resize(self.label.pixmap().size())  # resize again here
         self.resize(self.label.size())
         self.label.update()
+
+    def hide_pet_and_poop(self):
+        self.hide()
+        for poo in self.spawned_poo:
+            if poo.label:
+                poo.label.hide()
+        self.is_hidden = True
+
+    def show_pet_and_poop(self):
+        self.show()
+        for poo in self.spawned_poo:
+            if poo.label:
+                poo.label.show()
+        self.is_hidden = False
+
+    def toggle_visibility(self):
+        self.visible = not getattr(self, "visible", True)
+
+        if self.visible:
+            self.show_pet_and_poop()
+            self.control_panel.habitat_widget.hide()
+        else:
+            self.hide_pet_and_poop()
+            self.control_panel.habitat_widget.show()
+            self.sprite_changed.connect(self.control_panel.habitat_widget.update_pet_sprite)
+        self.control_panel.update_panel_size()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

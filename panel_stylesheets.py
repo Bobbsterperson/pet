@@ -138,13 +138,6 @@ def get_upgrade_btn(self):
 def get_menu_btn(self):
     return [
             {
-                "icon_0": "assets/mute0.png",
-                "icon_1": "assets/mute1.png",
-                "text_func": lambda: "Toggle mute/unmute sound",
-                "callback": self.mute_sound,
-
-            },
-            {
                 "icon_0": "assets/upgrades0.png",
                 "icon_1": "assets/upgrades1.png",
                 "text_func": lambda: "Upgrades",
@@ -167,6 +160,20 @@ def get_menu_btn(self):
                 "icon_1": "assets/achivements1.png",
                 "text_func": lambda: "achievements",
                 "callback": self.hide_achievements
+            },
+            {
+                "icon_0": "assets/cage0.png",
+                "icon_1": "assets/cage1.png",
+                "text_func": lambda: "Toggle cage/screen",
+                "callback": self.pet.toggle_visibility,
+
+            },
+            {
+                "icon_0": "assets/mute0.png",
+                "icon_1": "assets/mute1.png",
+                "text_func": lambda: "Toggle mute/unmute sound",
+                "callback": self.mute_sound,
+
             },
             {
                 "icon_0": "assets/on_top0.png",

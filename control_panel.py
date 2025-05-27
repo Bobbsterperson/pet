@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import QSizePolicy
 from sound import initialize_sounds
 import random
 from panel_stylesheets import panel, info_bar, bladder_bar, xp_bar, poop_btn, get_upgrade_btn, get_menu_btn, get_skill_btn, get_achievement_btn
+from pet_cage import PetHabitatWidget
 
 class PetControlPanel(QWidget):
     def __init__(self, pet):
@@ -19,9 +20,8 @@ class PetControlPanel(QWidget):
         self.POO_TYPES = get_poo_types()
 
         self.setWindowTitle("Control Panel")
-        self.setFixedSize(1000, 460)
+        # self.setFixedSize(1000, 460)
         self.setStyleSheet(panel)
-
         self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
 
@@ -31,7 +31,13 @@ class PetControlPanel(QWidget):
         layout = QVBoxLayout()
         layout.setSpacing(20)
 
-        # Create menu buttons container widget and layout
+        # Habitat widget — safely initialized and hidden by default
+
+        self.habitat_widget = PetHabitatWidget(self.pet)
+        self.habitat_widget.setVisible(False)
+        layout.addWidget(self.habitat_widget)
+
+        # Menu buttons
         self.menu_buttons_widget = QWidget()
         menu_layout = QHBoxLayout(self.menu_buttons_widget)
         menu_layout.setContentsMargins(0, 0, 0, 0)
@@ -39,7 +45,15 @@ class PetControlPanel(QWidget):
         self.add_menu_buttons(menu_layout)
         layout.addWidget(self.menu_buttons_widget)
 
-        # Create upgrades container widget and layout (togglable buttons)
+        # Insert bars container
+        self.bars_container = QVBoxLayout()
+        self.poop_bar = self.create_bladder_bar()
+        self.bars_container.addWidget(self.poop_bar)
+        self.xp_bar = self.create_xp_bar()
+        self.bars_container.addWidget(self.xp_bar)
+        layout.insertLayout(2, self.bars_container)
+
+        # Upgrade buttons
         self.upgrades_widget = QWidget()
         upgrades_layout = QHBoxLayout(self.upgrades_widget)
         upgrades_layout.setContentsMargins(0, 0, 0, 0)
@@ -47,6 +61,7 @@ class PetControlPanel(QWidget):
         self.add_upgrade_buttons(upgrades_layout)
         layout.addWidget(self.upgrades_widget)
 
+        # Skills
         self.skills_widget = QWidget()
         skills_layout = QHBoxLayout(self.skills_widget)
         skills_layout.setContentsMargins(0, 0, 0, 0)
@@ -54,6 +69,7 @@ class PetControlPanel(QWidget):
         self.add_skill_buttons(skills_layout)
         layout.addWidget(self.skills_widget)
 
+        # Achievements
         self.achievements_widget = QWidget()
         self.achievements_layout = QHBoxLayout(self.achievements_widget)
         self.achievements_layout.setContentsMargins(0, 0, 0, 0)
@@ -61,12 +77,11 @@ class PetControlPanel(QWidget):
         self.add_achievements_buttons(self.achievements_layout)
         layout.addWidget(self.achievements_widget)
 
-        # Hide these initially
         self.achievements_widget.setVisible(False)
         self.skills_widget.setVisible(False)
         self.upgrades_widget.setVisible(False)
 
-        # Info label moved here (below togglable buttons, above poop button)
+        # Info label
         self.info_label = QLabel("")
         self.info_label.setWordWrap(True)
         self.info_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
@@ -75,27 +90,21 @@ class PetControlPanel(QWidget):
         self.info_label.setStyleSheet(info_bar)
         layout.addWidget(self.info_label)
 
-        # Poop button at the bottom
+        # Poop button
         self.poop_button = self.create_poop_button()
         layout.addWidget(self.poop_button)
 
-        # Bars container only with bars (poop_bar, xp_bar)
-        self.bars_container = QVBoxLayout()
-        self.poop_bar = self.create_bladder_bar()
-        self.bars_container.addWidget(self.poop_bar)
-        self.xp_bar = self.create_xp_bar()
-        self.bars_container.addWidget(self.xp_bar)
-
-        # Insert bars container right below menu buttons
-        layout.insertLayout(1, self.bars_container)
-
-        # Final layout setup
+        # Finalize layout
         self.setLayout(layout)
 
         self.poop_refill_timer = QTimer(self)
         self.poop_refill_timer.timeout.connect(self.refill_poop_bar_in_time)
         self.poop_refill_timer.start(self.pet.bladder_refil_timer)
+
         self._drag_pos = None
+
+        # Safely connect habitat update
+        self.pet.sprite_changed.connect(self.habitat_widget.update_pet_sprite)
 
     def create_bladder_bar(self):
         bar = QProgressBar()
@@ -284,6 +293,16 @@ class PetControlPanel(QWidget):
             self.poop_button.setEnabled(False)
             QTimer.singleShot(1500, self.reset_button_text)
             return
+        elif self.pet.is_pooping or self.pet.is_eating:
+            self.poop_button.setText("Can't poop right now")
+            self.poop_button.setEnabled(False)
+            QTimer.singleShot(1500, self.reset_button_text)
+            return
+        # elif self.pet.is_hidden:
+        #     self.poop_button.setText("Can't poop in cage")
+        #     self.poop_button.setEnabled(False)
+        #     QTimer.singleShot(1500, self.reset_button_text)
+        #     return
         if self.poop_button.isEnabled():
             poo_type = self.get_random_poo_type()
             if self.poop_bar.value() >= poo_type.bladder_value_decrease:
@@ -330,18 +349,23 @@ class PetControlPanel(QWidget):
             self.upgrades_widget if hasattr(self, 'upgrades_widget') else None,
             self.skills_widget if hasattr(self, 'skills_widget') else None,
             self.achievements_widget if hasattr(self, 'achievements_widget') else None,
+            self.habitat_widget if hasattr(self, 'habitat_widget') else None,
             self.poop_button
         ]
         first_visible_found = False
         for w in widgets_in_order:
             if w and w.isVisible():
+                # print(f"Widget {w} sizeHint: {w.sizeHint()}")
                 add_widget_height(w, is_first=not first_visible_found)
                 first_visible_found = True
         # Enforce minimum/maximum height limits if necessary
         min_height = 200
-        max_height = 1200
-        final_height = max(min_height, min(total_height, max_height))
-        self.setFixedSize(base_width, final_height)
+        max_height = 2500
+        frame_height_margin = 40
+
+        final_height = max(min_height, min(total_height + frame_height_margin, max_height))
+        self.setMinimumSize(base_width, final_height)
+        self.resize(base_width, final_height)  # explicitly resize after setting minimum
 
     def update_pet_frame(self):
         pet_pixmap = self.pet.get_current_pixmap()
@@ -350,7 +374,11 @@ class PetControlPanel(QWidget):
             aspect_ratio = pet_pixmap.width() / pet_pixmap.height()
             label_width = int(label_height * aspect_ratio)
             self.pet_frame_label.setFixedWidth(label_width)
-            self.pet_frame_label.setPixmap(pet_pixmap)
+            scaled_pixmap = pet_pixmap.scaled(
+                label_width, label_height, Qt.KeepAspectRatio, Qt.SmoothTransformation
+            )
+            self.pet_frame_label.setPixmap(scaled_pixmap)
+
 
 
     def add_buttons(self, parent_layout, buttons_info, add_extra_widget=None):
@@ -439,5 +467,6 @@ class PetControlPanel(QWidget):
                     widget.deleteLater()
                 elif item.layout():
                     self.clear_layout(item.layout())
+
 
 

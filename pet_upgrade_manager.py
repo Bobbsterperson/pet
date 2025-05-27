@@ -136,7 +136,7 @@ class PetUpgradeManager:
         # Deduct XP and start the timer
         self.panel.xp_bar.setValue(xp - cost)
         self.panel.pet.poop_auto_timer.start(self.panel.pet.auto_poop_interval)
-
+        self.panel.pet.auto_poop_skill_enabled = True
         self.panel.info_label.setText(
             f"Auto-poop activated! Interval: {self.panel.pet.auto_poop_interval / 1000:.1f}s. "
             f"({cost} XP spent)"
