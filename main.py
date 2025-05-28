@@ -38,28 +38,44 @@ class Pet(QWidget):
         self.move(self.screen.width() // 2, self.screen.height() - self.height())
 
     def update_sprite(self):
-        if self.is_pooping or self.is_eating or self.is_hidden:
+        if self.is_pooping or self.is_eating:
             return
+        
+        if self.is_hidden:
+            # Cycle cage animation frames
+            pix = self.get_current_pixmap()
+            self.label.setPixmap(pix)
+            self.current_pixmap = pix
+            self.sprite_changed.emit(pix)
+            self.frame += 1
+            return
+
+        # Existing logic for normal sprites
         if self.is_dragging:
             pix = self.sprites["shiv"][self.frame % 4]
         elif self.is_walking:
             pix = self.sprites["walk"][self.frame % 4]
         else:
             pix = self.sprites["idle"][self.frame % 4]
+
         if self.direction == "left" and not self.is_dragging:
             pix = pix.transformed(QTransform().scale(-1, 1))
+
         self.label.setPixmap(pix)
         self.current_pixmap = pix
         self.sprite_changed.emit(pix)
         self.frame += 1
 
-    def get_current_pixmap(self):
-        pixmap = getattr(self, "current_pixmap", QPixmap("assets/pet/idle00.png"))
-        if pixmap.isNull():
-            print("Warning: get_current_pixmap() returned a null QPixmap.")
-            print("Check if 'assets/pet/idle00.png' exists and is a valid image.")
-        return pixmap
 
+    def get_current_pixmap(self):
+        if self.is_hidden:
+            frame_index = self.frame % len(self.cage_sprites)
+            return self.cage_sprites[frame_index]
+        else:
+            pixmap = getattr(self, "current_pixmap", QPixmap("assets/pet/idle00.png"))
+            if pixmap.isNull():
+                print("Warning: get_current_pixmap() returned a null QPixmap.")
+            return pixmap
 
     def move_pet(self):
         if self.old_pos is not None or self.gravity_timer.isActive() or self.is_hidden:
@@ -381,31 +397,35 @@ class Pet(QWidget):
         self.resize(self.label.size())
         self.label.update()
 
+
+
     def hide_pet_and_poop(self):
+        self.is_hidden = True  # Set the flag first
+        self.sprite_changed.emit(self.get_current_pixmap())
+        cage_pixmap = self.get_current_pixmap()  # Now this uses is_hidden=True
+        if cage_pixmap and not cage_pixmap.isNull():
+            self.label.setPixmap(cage_pixmap)
         self.hide()
         for poo in self.spawned_poo:
             if poo.label:
                 poo.label.hide()
-        self.is_hidden = True
 
     def show_pet_and_poop(self):
+        self.is_hidden = False  # Set the flag first
+        normal_pixmap = self.get_current_pixmap()  # Now this uses is_hidden=False
+        if normal_pixmap and not normal_pixmap.isNull():
+            self.label.setPixmap(normal_pixmap)
         self.show()
         for poo in self.spawned_poo:
             if poo.label:
                 poo.label.show()
-        self.is_hidden = False
 
     def toggle_visibility(self):
-        self.visible = not getattr(self, "visible", True)
-
-        if self.visible:
-            self.show_pet_and_poop()
-            self.control_panel.habitat_widget.hide()
-        else:
+        self.is_hidden = not self.is_hidden
+        if self.is_hidden:
             self.hide_pet_and_poop()
-            self.control_panel.habitat_widget.show()
-            self.sprite_changed.connect(self.control_panel.habitat_widget.update_pet_sprite)
-        self.control_panel.update_panel_size()
+        else:
+            self.show_pet_and_poop()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
