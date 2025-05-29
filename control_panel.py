@@ -8,7 +8,6 @@ from PyQt5.QtWidgets import QSizePolicy
 from sound import initialize_sounds
 import random
 from panel_stylesheets import panel, info_bar, bladder_bar, xp_bar, poop_btn, get_upgrade_btn, get_menu_btn, get_skill_btn, get_achievement_btn
-from pet_cage import PetHabitatWidget
 
 class PetControlPanel(QWidget):
     def __init__(self, pet):
@@ -32,21 +31,6 @@ class PetControlPanel(QWidget):
         layout = QVBoxLayout()
         layout.setSpacing(20)
 
-        # Habitat widget — safely initialized and hidden by default
-        # self.habitat_widget = PetHabitatWidget(self.pet)
-        # self.habitat_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        # self.habitat_widget.setMinimumHeight(160)
-        # self.habitat_widget.setVisible(False)
-        # layout.addWidget(self.habitat_widget)
-
-        # Colored label widget
-        self.colored_label = QLabel("This is a colored label", self)
-        self.colored_label.setFixedHeight(150)
-        # self.setMinimumSize(1000, self.sizeHint().height())
-        self.colored_label.setStyleSheet("background-color: #4682B4; color: white; font-size: 16px;")
-        self.colored_label.setAlignment(Qt.AlignCenter)
-        self.colored_label.hide()
-        layout.insertWidget(2, self.colored_label)
 
         # Menu buttons
         self.menu_buttons_widget = QWidget()
@@ -157,42 +141,56 @@ class PetControlPanel(QWidget):
         buttons_info = get_achievement_btn(self)
         self.add_buttons(parent_layout, buttons_info)
 
-    def add_menu_buttons(self, parent_layout):
-        buttons_info = get_menu_btn(self)
+    def create_pet_label(self):
         self.pet_frame_label = QLabel()
         label_height = 114
         self.pet_frame_label.setFixedHeight(label_height)
         pet_pixmap = self.pet.get_current_pixmap()
+        
         if pet_pixmap.isNull() or pet_pixmap.height() == 0:
             aspect_ratio = 1.0
-            pet_pixmap = QPixmap(100, 100)  # placeholder empty pixmap of 100x100
+            pet_pixmap = QPixmap(100, 100)  # placeholder pixmap
         else:
             aspect_ratio = pet_pixmap.width() / pet_pixmap.height()
+        
         label_width = int(label_height * aspect_ratio)
         self.pet_frame_label.setFixedWidth(label_width)
         self.pet_frame_label.setPixmap(pet_pixmap)
         self.pet_frame_label.setScaledContents(True)
-        # Use a horizontal layout for spacing + grid layout + pet label
-        extra_layout = QHBoxLayout()
-        extra_layout.addSpacing(15)
+        return self.pet_frame_label
+
+    def create_buttons_grid(self, buttons_info):
         grid_layout = QGridLayout()
         for index, info in enumerate(buttons_info):
             initial_text = info.get("text", "")
             button = InfoIconButton(info["icon_0"], info["icon_1"], initial_text)
-            text_func = info.get("text_func")
+            text_func = info.get("text_func")           
             if text_func:
                 button.hovered.connect(lambda _, f=text_func: self.update_info(f()))
             else:
-                button.hovered.connect(lambda _, t=initial_text: self.update_info(t))
+                button.hovered.connect(lambda _, t=initial_text: self.update_info(t))           
             button.unhovered.connect(self.clear_info)
-            button.clicked.connect(info["callback"])
+            button.clicked.connect(info["callback"])            
             row = index // 10
             col = index % 10
-            grid_layout.addWidget(button, row, col)
+            grid_layout.addWidget(button, row, col)        
+        return grid_layout
+
+    def create_extra_layout(self, buttons_info):
+        extra_layout = QHBoxLayout()
+        extra_layout.addSpacing(15)
+        grid_layout = self.create_buttons_grid(buttons_info)
         extra_layout.addLayout(grid_layout)
-        extra_layout.addWidget(self.pet_frame_label)
-        # Pass extra_layout to add_buttons
+        pet_label = self.create_pet_label()
+        extra_layout.addWidget(pet_label)
+        return extra_layout
+
+
+    def add_menu_buttons(self, parent_layout):
+        buttons_info = get_menu_btn(self)
+        extra_layout = self.create_extra_layout(buttons_info)
         self.add_buttons(parent_layout, [], add_extra_widget=extra_layout)
+
 
     def double_poop_production(self):
         pass
@@ -351,14 +349,12 @@ class PetControlPanel(QWidget):
                 total_height += widget.sizeHint().height()
         widgets_in_order = [
             self.menu_buttons_widget if hasattr(self, 'menu_buttons_widget') else None,
-            self.colored_label if hasattr(self, 'colored_label') else None,
             self.poop_bar,
             self.xp_bar,
             self.info_label,
             self.upgrades_widget if hasattr(self, 'upgrades_widget') else None,
             self.skills_widget if hasattr(self, 'skills_widget') else None,
             self.achievements_widget if hasattr(self, 'achievements_widget') else None,
-            # self.habitat_widget if hasattr(self, 'habitat_widget') else None,
             self.poop_button
         ]
         first_visible_found = False
@@ -376,7 +372,7 @@ class PetControlPanel(QWidget):
         final_height = max(min_height, min(total_height + frame_height_margin, max_height))
 
         self.setMinimumSize(base_width, final_height)
-        self.resize(base_width, final_height)  # explicitly resize after setting minimum
+        self.resize(base_width, final_height)  # or self.adjustSize()  # explicitly resize after setting minimum
 
     def update_pet_frame(self):
         pet_pixmap = self.pet.get_current_pixmap()
@@ -389,6 +385,8 @@ class PetControlPanel(QWidget):
                 label_width, label_height, Qt.KeepAspectRatio, Qt.SmoothTransformation
             )
             self.pet_frame_label.setPixmap(scaled_pixmap)
+            QApplication.processEvents()  # 🔁 Force UI update
+
 
 
 
@@ -483,13 +481,3 @@ class PetControlPanel(QWidget):
     def get_screen_height():
         screen = QDesktopWidget().availableGeometry()
         return screen.height()
-
-    def show_colored_label(self):
-        self.colored_label.show()
-
-    def toggle_colored_label(self):
-        if self.colored_label.isVisible():
-            self.colored_label.hide()
-        else:
-            self.colored_label.show()
-        self.update_panel_size()

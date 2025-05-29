@@ -71,11 +71,39 @@ class Pet(QWidget):
         if self.is_hidden:
             frame_index = self.frame % len(self.cage_sprites)
             return self.cage_sprites[frame_index]
-        else:
-            pixmap = getattr(self, "current_pixmap", QPixmap("assets/pet/idle00.png"))
-            if pixmap.isNull():
-                print("Warning: get_current_pixmap() returned a null QPixmap.")
-            return pixmap
+
+        # Handle special animations:
+        if self.current_action == "eat":
+            eat_frames = self.sprites.get("eat", [])
+            if eat_frames and 0 <= self.frame < len(eat_frames):
+                pixmap = eat_frames[self.frame]
+                if self.direction == "left":
+                    pixmap = pixmap.transformed(QTransform().scale(-1, 1))
+                return pixmap
+
+        elif self.current_action == "poop":
+            poop_frames = self.sprites.get("poop", [])
+            if poop_frames and 0 <= self.frame < len(poop_frames):
+                pixmap = poop_frames[self.frame]
+                if self.direction == "left":
+                    pixmap = pixmap.transformed(QTransform().scale(-1, 1))
+                return pixmap
+
+        elif self.current_action == "achievement_animation":
+            achievement_frames = self.sprites.get("achievement", [])
+            if achievement_frames and 0 <= self.frame < len(achievement_frames):
+                pixmap = achievement_frames[self.frame]
+                if self.direction == "left":
+                    pixmap = pixmap.transformed(QTransform().scale(-1, 1))
+                return pixmap
+
+        # Default fallback:
+        pixmap = getattr(self, "current_pixmap", QPixmap("assets/pet/idle00.png"))
+        if pixmap.isNull():
+            print("Warning: get_current_pixmap() returned a null QPixmap.")
+        return pixmap
+
+
 
     def move_pet(self):
         if self.old_pos is not None or self.gravity_timer.isActive() or self.is_hidden:
@@ -262,7 +290,10 @@ class Pet(QWidget):
         if self.direction == "left":
             pix = pix.transformed(QTransform().scale(-1, 1))
         self.label.setPixmap(pix)
+        self.current_pixmap = pix
+        self.sprite_changed.emit(pix)  # <-- Here!
         self.frame += 1
+
 
 
 
@@ -276,7 +307,7 @@ class Pet(QWidget):
             self.poop_animation_timer.deleteLater()
             del self.poop_animation_timer
 
-            self.spawn_poo(self.current_poo_type)  # Spawn actual poo
+            self.spawn_poo(self.current_poo_type)
 
             self.is_pooping = False
             self.is_walking = True
@@ -285,12 +316,14 @@ class Pet(QWidget):
             self.frame = 0
             return
 
-        # Display pet's poop animation frame
         pix = self.sprites["poop"][self.frame % 4]
         if self.direction == "left":
             pix = pix.transformed(QTransform().scale(-1, 1))
         self.label.setPixmap(pix)
+        self.current_pixmap = pix
+        self.sprite_changed.emit(pix)  # <-- Here!
         self.frame += 1
+
 
     def spawn_poo(self, poo_type):
         self.poop_sound.play()       
@@ -361,27 +394,39 @@ class Pet(QWidget):
     def eat_animation(self, poo):
         if self.gravity_timer.isActive() or self.is_pooping:
             return
-        eat_frames = self.sprites["eat"]     
+
+        eat_frames = self.sprites["eat"]
+
         if self.frame >= len(eat_frames):
             self.eat_animation_timer.stop()
             self.eat_animation_timer = None
             self.label.setPixmap(self.sprites["idle"][0])
+            self.sprite_changed.emit(self.sprites["idle"][0])  # <- Emit idle sprite at end
             self.frame = 0
             self.is_eating = False
             self.current_action = None
             self.is_walking = True
             self.animation_timer.start(self.animation_interval)
+
             if poo and poo in self.spawned_poo:
                 bladder_value, xp = poo.consume()
                 self.spawned_poo.remove(poo)
                 self.control_panel.refill_poop_bar(bladder_value)
                 self.control_panel.increase_xp(xp)
-            # Clear the target poo after it's been consumed
+
             if poo == self.target_poo:
                 self.target_poo = None
+
             return
-        self.label.setPixmap(eat_frames[self.frame])
+
+        pix = eat_frames[self.frame]
+        if self.direction == "left":
+            pix = pix.transformed(QTransform().scale(-1, 1))
+
+        self.label.setPixmap(pix)
+        self.sprite_changed.emit(pix)  # <- Send signal for each frame
         self.frame += 1
+
 
     def change_pet_variant_on_level(self):
         if self.control_panel.current_level >= 5:

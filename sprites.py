@@ -9,6 +9,7 @@ def initialize_sprites(self):
         self.label.show()
 
     POO_TYPES = get_poo_types()
+    self.current_action = None
 
     self.sprites = {}
 
@@ -17,6 +18,9 @@ def initialize_sprites(self):
         self.sprites[action] = [
             QPixmap(f"assets/pet/{action}{self.sprite_variant}{i}.png") for i in range(4)
         ]
+
+    # Add cage sprites here
+    self.cage_sprites = [QPixmap(f"assets/pet/cage_idle0{i}.png") for i in range(4)]
 
     self.label.setPixmap(self.sprites["idle"][0])
     self.label.resize(self.label.pixmap().size())  # <-- Add this
@@ -36,3 +40,4 @@ def initialize_sprites(self):
 
     if not hasattr(self, 'spawned_poo'):
         self.spawned_poo = []
+
